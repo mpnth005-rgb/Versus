@@ -1,0 +1,219 @@
+// Versus — Prisma schema
+// Dev datasource is SQLite (see .env / DATABASE_URL). Swap the datasource
+// provider to "postgresql" for production — see design/README (moved) or
+// the project README for details.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Auth.js (NextAuth) models — required shape for @auth/prisma-adapter
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+
+  subscription  Subscription?
+  settings      UserSettings?
+  exercises     Exercise[]
+  flashcards    Flashcard[]
+  monthlyUsages MonthlyUsage[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+enum Plan {
+  FREE
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+}
+
+model Subscription {
+  id                   String              @id @default(cuid())
+  userId               String              @unique
+  plan                 Plan                @default(FREE)
+  status               SubscriptionStatus  @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Tracks the free-tier "N exercises per month" quota.
+model MonthlyUsage {
+  id             String @id @default(cuid())
+  userId         String
+  yearMonth      String // "2026-09"
+  exercisesUsed  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, yearMonth])
+}
+
+model UserSettings {
+  id                 String @id @default(cuid())
+  userId             String @unique
+  dailyNewCardLimit  Int    @default(10)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Training
+// ---------------------------------------------------------------------------
+
+enum TextType {
+  LITERARY
+  JOURNALISTIC
+  DAILY
+}
+
+enum Level {
+  A2
+  B1
+  B2
+  C1
+}
+
+enum ExerciseStatus {
+  GENERATING
+  READY
+  SUBMITTED
+  CORRECTING
+  CORRECTED
+  COMPLETED
+}
+
+model Exercise {
+  id         String         @id @default(cuid())
+  userId     String
+  title      String
+  textType   TextType
+  level      Level
+  themes     Json // string[] e.g. ["Science", "Environnement"]
+  sourceText String
+  wordCount  Int
+  status     ExerciseStatus @default(GENERATING)
+  createdAt  DateTime       @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  translation Translation?
+  correction  Correction?
+  flashcards  Flashcard[]
+}
+
+model Translation {
+  id          String   @id @default(cuid())
+  exerciseId  String   @unique
+  content     String
+  wordCount   Int
+  submittedAt DateTime @default(now())
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+}
+
+// AI-graded correction for an exercise. sentenceCorrections and
+// suggestedCards are structured JSON produced by the grading model —
+// see lib/ai.ts for the exact shape.
+model Correction {
+  id                   String   @id @default(cuid())
+  exerciseId           String   @unique
+  overallScore         Int
+  adjustedScore        Int
+  referenceTranslation String
+  sentenceCorrections  Json
+  suggestedCards       Json
+  createdAt            DateTime @default(now())
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Flashcard deck (SM-2-style spaced repetition)
+// ---------------------------------------------------------------------------
+
+enum CardState {
+  NEW
+  LEARNING
+  REVIEW
+}
+
+model Flashcard {
+  id               String    @id @default(cuid())
+  userId           String
+  front            String
+  back             String
+  state            CardState @default(NEW)
+  dueAt            DateTime  @default(now())
+  intervalMinutes  Int       @default(0)
+  easeFactor       Float     @default(2.5)
+  repetitions      Int       @default(0)
+  sourceExerciseId String?
+  createdAt        DateTime  @default(now())
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceExercise Exercise? @relation(fields: [sourceExerciseId], references: [id], onDelete: SetNull)
+}
