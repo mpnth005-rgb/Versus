@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet data-dc-atomics="">
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#e9e6df;font-family:'Archivo',sans-serif;-webkit-font-smoothing:antialiased}
+  .dv-turn{padding:44px 48px 40px}
+  .dv-thd{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
+  .dv-tid{font:600 11px ui-monospace,Menlo,monospace;padding:3px 8px;background:#201e1d;color:#fff;border-radius:5px;text-decoration:none}
+  .dv-tname{font:600 15px/1.3 system-ui,sans-serif;color:#201e1d}
+  .dv-tsub{margin:0 0 28px;font:13px/1.5 system-ui,sans-serif;color:rgba(32,30,29,.6);max-width:760px}
+  .dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+  .dv-opt{flex:none;display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}
+  .dv-oid{font:700 11px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(32,30,29,.09);color:#201e1d;border-radius:6px;text-decoration:none}
+  .dv-olabel{display:flex;align-items:baseline;gap:9px;font:600 13px/1.3 system-ui,sans-serif;color:#201e1d}
+  .dv-odesc{margin:0;font:12px/1.5 system-ui,sans-serif;color:rgba(32,30,29,.55);max-width:420px}
+  .dv-stack{display:flex;flex-direction:column;gap:28px}
+  .dv-card{background:#f3f2f2;border:2px solid #201e1d;overflow:hidden}
+  @keyframes dv-quota-a{0%,42%{opacity:1;transform:translateY(0)}50%,92%{opacity:0;transform:translateY(-7px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes dv-quota-b{0%,42%{opacity:0;transform:translateY(7px)}50%,92%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(7px)}}
+  @keyframes dv-progress-fill{0%{width:6%}50%{width:78%}100%{width:96%}}
+  @keyframes dv-load-a{0%,4%{opacity:0}9%,29%{opacity:1}34%,100%{opacity:0}}
+  @keyframes dv-load-b{0%,33%{opacity:0}38%,62%{opacity:1}67%,100%{opacity:0}}
+  @keyframes dv-load-c{0%,66%{opacity:0}71%,96%{opacity:1}100%{opacity:0}}
+  @keyframes dv-spin{to{transform:rotate(360deg)}}
+  @keyframes dv-sweep{0%{transform:scaleX(0);transform-origin:left}45%{transform:scaleX(1);transform-origin:left}55%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+  @keyframes dv-step{0%,100%{opacity:.3}50%{opacity:1}}
+  @keyframes dv-cursor{0%,49%{opacity:1}50%,100%{opacity:0}}
+  @keyframes dv-resolve{0%,100%{filter:blur(0);opacity:1}30%,70%{filter:blur(5px);opacity:.4}}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+    <div style="width:56px;height:56px;border-radius:14px;background:oklch(0.97 0.005 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0">
+      <div style="font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;color:oklch(0.22 0.01 90)">V</div>
+      <div style="width:14px;height:2px;border-radius:1px;background:oklch(0.45 0.09 200)"></div>
+    </div>
+    <span style="font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;color:#201e1d">Logo</span>
+  </div>
+  <div class="dv-thd"><a class="dv-tid" href="#t3">1</a><span class="dv-tname">Connexion — Apple / Google uniquement</span></div>
+  <p class="dv-tsub">Formulaire centré, identité "encre &amp; papier" du reste du document.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel">Centré — sans panneau latéral</div>
+      <p class="dv-odesc">Formulaire centré sur fond papier ; l'aperçu de l'app apparaît en petit format au-dessus, comme une preuve produit.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;align-items:center;justify-content:center;padding:60px">
+    <div style="width:420px;display:flex;flex-direction:column;align-items:center;text-align:center">
+      
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:20px">
+        <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+        <div style="width:28px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+      </div>
+      <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;line-height:1.15;margin-bottom:10px">Heureux de vous revoir !</div>
+      
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:8px;border:1px solid oklch(0.85 0.01 90);background:#fff;font-size:14.5px;font-weight:600;color:oklch(0.25 0.01 90);cursor:pointer">
+          <svg width="17" height="17" sc-camel-view-box="0 0 24 24"><path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.47a5.53 5.53 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.66z"></path><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.94-2.9l-3.88-3.02c-1.08.72-2.46 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.94H1.28v3.11A12 12 0 0 0 12 24z"></path><path fill="#FBBC05" d="M5.29 14.29a7.2 7.2 0 0 1 0-4.58V6.6H1.28a12 12 0 0 0 0 10.8z"></path><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.79l3.44-3.44C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.28 6.6l4.01 3.11C6.23 6.87 8.88 4.75 12 4.75z"></path></svg>
+          Continuer avec Google
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:8px;background:oklch(0.22 0.01 90);font-size:14.5px;font-weight:600;color:#fff;cursor:pointer">
+          <svg width="15" height="15" sc-camel-view-box="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.25 7.31c1.36.07 2.31.75 3.11.8.85.06 1.71-.13 2.85-.9 1.16.79 1.87 1.55 2.32 2.61-2.87 1.63-2.42 5.24.4 6.4-.34 1.09-.8 2.05-.88 2.06zM12.03 7.25c-.15-2.23 1.66-4.24 3.75-4.25.29 2.58-2.19 4.6-3.75 4.25z"></path></svg>
+          Continuer avec Apple
+        </div>
+      </div>
+      <div style="font-size:12px;color:oklch(0.55 0.01 90);margin-top:24px;line-height:1.6">En vous connectant avec&nbsp; Google ou Apple, vous acceptez les&nbsp;<span style="text-decoration: underline; cursor: pointer;">Conditions générales</span> et la&nbsp;<span style="text-decoration: underline; cursor: pointer;">Politique de confidentialité</span><span style="cursor: pointer;"> de Versus.</span></div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Essayez : "ajoute l'état signup" · "ajoute un état d'erreur de connexion"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">2</a><span class="dv-tname">Entraînement — parcours complet</span></div>
+  <p class="dv-tsub">Critères de l'exercice → éditeur de traduction → correction détaillée → cartes suggérées → deck de révision (flashcards) → suivi de progression. Maquettes statiques, desktop 1440px.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel">Sobre — sidebar éditoriale</div>
+      <p class="dv-odesc">Navigation latérale fixe, serif/sans, palette encre &amp; papier, critères empilés verticalement.</p>
+      <div class="dv-stack" id="1a-stack">
+        <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Sidebar ouverte</div>
+          <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:56px 64px;display:flex;flex-direction:column;gap:0;max-width:640px">
+      <div style="margin-bottom:32px">
+        <div style="font-size:13px;font-weight:600;color:oklch(0.45 0.09 200);letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px">Nouvel exercice</div>
+        <div style="font-family:'Source Serif 4',serif;font-size:32px;font-weight:600;line-height:1.1">Choisissez les critères de votre texte</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Type de texte</div>
+        <div style="display:flex;gap:10px">
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;background:oklch(0.45 0.09 200);color:#fff">Littéraire</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Journalistique</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Quotidien</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:28px 0;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Niveau de langue</div>
+        <div style="display:flex;gap:0;border:1px solid oklch(0.88 0.01 90);border-radius:8px;width:fit-content;overflow:hidden">
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90)">A2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">B1</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:600;background:oklch(0.45 0.09 200);color:#fff;border-left:1px solid oklch(0.88 0.01 90)">B2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">C1</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:28px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Thèmes <span style="font-weight:400;color:oklch(0.55 0.01 90)">(jusqu'à 3)</span></div>
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.45 0.09 200)">2/3 sélectionnés</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Science</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Environnement</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Politique</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Économie</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Société</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Culture</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;margin-top:32px">
+        <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Générer le texte</div>
+        <div style="font-size:12.5px;color:oklch(0.55 0.01 90);max-width:280px">Un nouveau texte de 130–170 mots sera généré selon vos critères.</div>
+      </div>
+    </div>
+  </div>
+</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Sidebar fermée</div>
+          <div class="dv-card" style="width:900px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="position:relative;display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="position:absolute;top:24px;left:24px;width:26px;height:26px;border-radius:7px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08)" title="Ouvrir la sidebar">»</div>
+    <div style="flex:1;padding:56px 64px 56px 80px;display:flex;flex-direction:column;gap:0;max-width:640px">
+      <div style="margin-bottom:32px">
+        <div style="font-size:13px;font-weight:600;color:oklch(0.45 0.09 200);letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px">Nouvel exercice</div>
+        <div style="font-family:'Source Serif 4',serif;font-size:32px;font-weight:600;line-height:1.1">Choisissez les critères de votre texte</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Type de texte</div>
+        <div style="display:flex;gap:10px">
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;background:oklch(0.45 0.09 200);color:#fff">Littéraire</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Journalistique</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Quotidien</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:28px 0;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Niveau de langue</div>
+        <div style="display:flex;gap:0;border:1px solid oklch(0.88 0.01 90);border-radius:8px;width:fit-content;overflow:hidden">
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90)">A2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">B1</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:600;background:oklch(0.45 0.09 200);color:#fff;border-left:1px solid oklch(0.88 0.01 90)">B2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">C1</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:28px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Thèmes <span style="font-weight:400;color:oklch(0.55 0.01 90)">(jusqu'à 3)</span></div>
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.45 0.09 200)">2/3 sélectionnés</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Science</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Environnement</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Politique</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Économie</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Société</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Culture</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;margin-top:32px">
+        <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Générer le texte</div>
+      </div>
+    </div>
+  </div>
+</div>
+        </div>
+        </div>
+
+        <div style="width:100%;margin-top:8px">
+          <div style="font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px">Pop-in — abonnement (déclenchée par "Versus gratuit")</div>
+          <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="position:relative;display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.92 0.03 200);font-size:12.5px;line-height:1.5;color:oklch(0.32 0.09 200);cursor:pointer">
+        <div style="font-weight:600;margin-bottom:4px">Versus gratuit</div>
+        <div>7 exercices restants ce mois-ci</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:56px 64px;display:flex;flex-direction:column;gap:0;max-width:640px;filter:blur(2px);opacity:0.5">
+      <div style="margin-bottom:32px">
+        <div style="font-size:13px;font-weight:600;color:oklch(0.45 0.09 200);letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px">Nouvel exercice</div>
+        <div style="font-family:'Source Serif 4',serif;font-size:32px;font-weight:600;line-height:1.1">Choisissez les critères de votre texte</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Type de texte</div>
+        <div style="display:flex;gap:10px">
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;background:oklch(0.45 0.09 200);color:#fff">Littéraire</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Journalistique</div>
+          <div style="padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Quotidien</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:28px 0;border-bottom:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Niveau de langue</div>
+        <div style="display:flex;gap:0;border:1px solid oklch(0.88 0.01 90);border-radius:8px;width:fit-content;overflow:hidden">
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90)">A2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">B1</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:600;background:oklch(0.45 0.09 200);color:#fff;border-left:1px solid oklch(0.88 0.01 90)">B2</div>
+          <div style="padding:9px 22px;font-size:14px;font-weight:500;color:oklch(0.45 0.01 90);border-left:1px solid oklch(0.88 0.01 90)">C1</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:28px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Thèmes <span style="font-weight:400;color:oklch(0.55 0.01 90)">(jusqu'à 3)</span></div>
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.45 0.09 200)">2/3 sélectionnés</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Science</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Environnement</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Politique</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Économie</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Société</div>
+          <div style="padding:8px 16px;border-radius:20px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.45 0.01 90)">Culture</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;margin-top:32px">
+        <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Générer le texte</div>
+      </div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(32,30,29,0.35);display:flex;align-items:center;justify-content:center">
+      <div style="width:460px;background:#fff;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:22px;box-shadow:0 12px 40px rgba(0,0,0,0.18)">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600">Versus Upper</div>
+            <div style="width:32px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+          </div>
+          
+        </div>
+        <div style="font-size:13.5px;line-height:1.55;color:oklch(0.5 0.01 90)">Exercices illimités, deck de révision sans limite quotidienne, et ajout de cartes sans restriction.</div>
+        <div style="display:flex;gap:14px">
+          <div style="flex:1;padding:20px;border-radius:12px;border:1px solid oklch(0.88 0.01 90);display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.03em">Mensuel</div>
+            <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600">4,99&nbsp;€<span style="font-size:13px;font-weight:400;color:oklch(0.55 0.01 90)">&nbsp;/ mois</span></div>
+          </div>
+          <div style="flex:1;padding:20px;border-radius:12px;border:2px solid oklch(0.45 0.09 200);position:relative;display:flex;flex-direction:column;gap:6px">
+            <div style="position:absolute;top:-11px;left:16px;padding:2px 10px;border-radius:20px;background:oklch(0.45 0.09 200);color:#fff;font-size:10.5px;font-weight:600">-33%</div>
+            <div style="font-size:12px;font-weight:600;color:oklch(0.45 0.09 200);text-transform:uppercase;letter-spacing:0.03em">Annuel</div>
+            <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600">39,99&nbsp;€<span style="font-size:13px;font-weight:400;color:oklch(0.55 0.01 90)">&nbsp;/ an</span></div>
+          </div>
+        </div>
+        
+        <div style="text-align:center;font-size:12.5px;color:oklch(0.55 0.01 90);cursor:pointer">Continuer avec Versus gratuit</div>
+      </div>
+    </div>
+  </div>
+</div>
+        </div>
+
+
+        </div>
+
+        <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+        <div>
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px;margin-bottom:12px">États — widget de quota (gratuit vs. Versus Upper)</div>
+        <div style="width:760px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;gap:40px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Gratuit</div>
+            <div style="padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90);font-family:'IBM Plex Sans',sans-serif;min-height:56px">
+              <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+              <div style="position:relative;height:18px">
+                <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+                <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Premium</div>
+            <div style="padding:16px;border-radius:10px;background:oklch(0.45 0.09 200);font-size:12.5px;line-height:1.5;color:oklch(0.92 0.03 200);font-family:'IBM Plex Sans',sans-serif;min-height:56px">
+              <div style="display:flex;align-items:center;gap:6px;font-weight:600;color:#fff;margin-bottom:4px">
+                <svg width="11" height="11" sc-camel-view-box="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6L22 9.3l-5 4.8L18.2 22 12 18.3 5.8 22 7 14.1l-5-4.8 7.1-0.7z"></path></svg>
+                Versus Upper
+              </div>
+              <div>Entraînement illimité</div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div>
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px;margin-bottom:12px">États — bouton "Générer le texte" (désactivé vs. actif)</div>
+        <div style="width:420px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Désactivé — critères non sélectionnés ou limite d'exercices atteinte</div>
+            <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.93 0.005 90);color:oklch(0.65 0.01 90);width:fit-content;cursor:not-allowed">Générer le texte</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Actif — critères sélectionnés</div>
+            <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;width:fit-content;cursor:pointer">Générer le texte</div>
+          </div>
+        </div>
+        </div>
+        </div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:28px">
+      <div style="font-family:'Source Serif 4',serif;font-size:24px;font-weight:600">Le vieux pêcheur</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:-14px">
+        <div style="display:flex;gap:10px">
+          <div style="padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:500;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Littéraire</div>
+          <div style="padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:500;background:oklch(0.94 0.005 90);color:oklch(0.4 0.01 90)">B2</div>
+          <div style="padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:500;background:oklch(0.94 0.005 90);color:oklch(0.4 0.01 90)">Science · Environnement</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:oklch(0.45 0.09 200)">
+          <div style="width:16px;height:16px;border:2px solid oklch(0.45 0.09 200);border-radius:50%;border-top-color:transparent"></div>
+          Régénérer le texte
+        </div>
+      </div>
+      <div style="display:flex;gap:32px;flex:1">
+        <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.02em">Texte source (français)</div>
+          <div style="flex:1;padding:28px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90);font-family:'Source Serif 4',serif;font-size:17px;line-height:1.75;color:oklch(0.25 0.01 90);display:flex;flex-direction:column;justify-content:space-between;gap:20px">
+            <div>Le vieux pêcheur observait la mer depuis sa fenêtre, comme il le faisait chaque matin depuis quarante ans. Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait, indifférente aux saisons et aux hommes qui passaient. Il se souvenait encore du jour où son père lui avait appris à lire les nuages, à deviner la tempête avant qu'elle n'arrive.</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;color:oklch(0.55 0.01 90);text-align:right">96 mots</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.02em">Votre traduction (anglais)</div>
+          <div style="flex:1;padding:28px;border-radius:12px;background:#fff;border:2px solid oklch(0.45 0.09 200);font-family:'IBM Plex Sans',sans-serif;font-size:16px;line-height:1.75;color:oklch(0.3 0.01 90)">
+            The old fisherman watched the sea from his window, as he had done every morning for forty years. The waves came to die on the rocks with a regularity that reassured him<span style="color:oklch(0.7 0.01 90)">...</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:500;color:oklch(0.4 0.01 90)">← Retour aux critères</div>
+        <div style="width:52px;height:52px;border-radius:14px;background:oklch(0.4 0.11 200);display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:#fff;cursor:pointer">V</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">États — bouton d'envoi de traduction (désactivé si &lt; 50% des mots écrits)</div>
+        <div style="width:420px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Désactivé — moins de la moitié des mots écrits</div>
+            <div style="width:52px;height:52px;border-radius:14px;background:#fff;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:oklch(0.65 0.01 90);cursor:not-allowed">V</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Actif — au moins la moitié des mots écrits</div>
+            <div style="width:52px;height:52px;border-radius:14px;background:oklch(0.4 0.11 200);display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:#fff;cursor:pointer">V</div>
+          </div>
+        </div>
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Correction de la traduction</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:32px;max-width:1000px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.03em">Le vieux pêcheur</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Correction de votre traduction</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer">
+          <span style="font-size:15px">✓</span>Terminer la session
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div style="flex:1;padding:24px 28px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.02em">Score global</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:40px;font-weight:600">78<span style="font-size:20px;color:oklch(0.55 0.01 90)">/100</span></div>
+        </div>
+        <div style="flex:1;padding:24px 28px;border-radius:12px;background:oklch(0.92 0.03 200);border:1px solid oklch(0.85 0.05 200);display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12.5px;font-weight:600;color:oklch(0.32 0.09 200);text-transform:uppercase;letter-spacing:0.02em">Score ajusté (niveau B2)</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:40px;font-weight:600;color:oklch(0.32 0.09 200)">86<span style="font-size:20px;color:oklch(0.4 0.06 200)">/100</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Correction phrase par phrase</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">‹</div>
+            <div style="font-size:12.5px;font-weight:500;color:oklch(0.5 0.01 90)">2 / 3</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">›</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;padding:20px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="font-family:'Source Serif 4',serif;font-size:15px;color:oklch(0.45 0.01 90)">Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+          <div style="font-size:15px;color:oklch(0.3 0.01 90)">The waves came to die on the rocks with a <span style="background:oklch(0.94 0.09 25);text-decoration:underline wavy oklch(0.55 0.15 25);text-decoration-thickness:1.5px">regularity that reassured him</span>.</div>
+          <div style="font-size:13px;color:oklch(0.5 0.15 25)"><span style="font-weight:600">Registre —</span> "a reassuring regularity" serait plus idiomatique en anglais.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;padding:28px 32px;border-radius:12px;background:oklch(0.96 0.005 90)">
+        <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Traduction de référence complète</div>
+        <div style="font-size:15.5px;line-height:1.8;color:oklch(0.4 0.01 90)">The old fisherman watched the sea from his window, as he did every morning for forty years. The waves came to die on the rocks with a reassuring regularity, indifferent to the seasons and the men who passed by.</div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12.5px;color:oklch(0.55 0.01 90)">3 phrases suggérées pour votre deck de révision</div>
+        <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Cartes suggérées →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">États — pagination de la correction phrase par phrase</div>
+        <div style="width:640px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:18px">
+          <div style="display:grid;grid-template-columns:110px repeat(2,1fr);gap:12px;font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">
+            <div></div><div>Cliquable</div><div>Désactivé (fin de liste)</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:110px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">‹ Précédente</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">‹</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.92 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.8 0.005 90);cursor:not-allowed">‹</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:110px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Suivante ›</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">›</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.92 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.8 0.005 90);cursor:not-allowed">›</div>
+          </div>
+
+          <div style="font-size:12px;color:oklch(0.55 0.01 90);padding-top:6px;border-top:1px solid oklch(0.92 0.01 90)">Sur la 1ʳᵉ phrase (1/3) : ‹ désactivée. Sur la dernière (3/3) : › désactivée.</div>
+        </div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Pop-in — confirmation de fin de session</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="position:relative;min-height:900px;background:oklch(0.9 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="position:absolute;inset:0;background:oklch(0.2 0.01 90 / 0.45)"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;padding:32px;border-radius:14px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:20px">
+      <div style="font-family:'Source Serif 4',serif;font-size:21px;font-weight:600">Terminer la session ?</div>
+      <div style="font-size:14px;line-height:1.6;color:oklch(0.45 0.01 90)">Êtes-vous sûr de vouloir terminer votre session ? Vous ne pourrez plus revenir à la correction ni aux phrases suggérées.</div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:6px">
+        <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer">Annuler</div>
+        <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;cursor:pointer">Terminer la session</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Fin de session (aucune carte ajoutée)</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center">
+      <div style="width:64px;height:64px;border-radius:50%;background:oklch(0.92 0.03 200);display:flex;align-items:center;justify-content:center;font-size:28px;color:oklch(0.4 0.11 200)">✓</div>
+      <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Exercice terminé !&nbsp;</div>
+      <div style="font-size:15px;line-height:1.6;color:oklch(0.45 0.01 90);max-width:420px">Score : 78/100.</div>
+      <div style="padding:16px 24px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:13px;color:oklch(0.5 0.01 90)">Il vous reste <span style="font-weight:600;color:oklch(0.3 0.01 90)">6 exercices</span> ce mois-ci.</div>
+      <div style="display:flex;gap:14px;margin-top:10px">
+        <div style="padding:13px 26px;border-radius:8px;font-size:14.5px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;cursor:pointer">Nouvel exercice</div>
+      </div>
+    </div>
+  </div>
+</div>
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Cartes suggérées (feedback détaillé)</div>
+
+<div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:56px 64px;display:flex;flex-direction:column;gap:32px;max-width:760px">
+      <div>
+        <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;line-height:1.15">Cartes suggérées pour votre deck</div>
+        <div style="font-size:13.5px;color:oklch(0.5 0.01 90);margin-top:10px">Sélectionnez les phrases à ajouter à votre deck de révision. Vous pouvez rafraîchir une suggestion si elle ne vous convient pas.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="padding:22px 24px;border-radius:12px;background:#fff;border:2px solid oklch(0.4 0.11 200);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Recto</div>
+              <div style="font-family:'Source Serif 4',serif;font-size:16px;color:oklch(0.25 0.01 90)">Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px">Verso</div>
+              <div style="font-size:15px;color:oklch(0.35 0.01 90)">The waves came to die on the rocks with a reassuring regularity.</div>
+            </div>
+            <div style="flex-shrink:0;font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);background:oklch(0.92 0.03 200);padding:4px 10px;border-radius:20px;white-space:nowrap">Erreur de registre</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:6px;border-top:1px solid oklch(0.92 0.01 90)">
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.4 0.11 200);color:#fff">
+              <span style="font-size:14px">✓</span>Ajouté au deck
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:22px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Recto</div>
+              <div style="font-family:'Source Serif 4',serif;font-size:16px;color:oklch(0.25 0.01 90)">Le vieux pêcheur observait la mer depuis sa fenêtre, comme il le faisait chaque matin.</div>
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px">Verso</div>
+              <div style="font-size:15px;color:oklch(0.35 0.01 90)">The old fisherman watched the sea from his window, as he did every morning.</div>
+            </div>
+            <div style="flex-shrink:0;font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);background:oklch(0.92 0.03 200);padding:4px 10px;border-radius:20px;white-space:nowrap">Temps verbal</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:6px;border-top:1px solid oklch(0.92 0.01 90)">
+            <div style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Ajouter au deck</div>
+            <div style="margin-left:auto;font-size:12.5px;font-weight:500;color:oklch(0.5 0.01 90)">Rafraîchir la phrase ↻</div>
+          </div>
+        </div>
+
+        <div style="padding:22px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Recto</div>
+              <div style="font-family:'Source Serif 4',serif;font-size:16px;color:oklch(0.25 0.01 90)">Il se souvenait encore du jour où son père lui avait appris à lire les nuages.</div>
+              <div style="font-size:10.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px">Verso</div>
+              <div style="font-size:15px;color:oklch(0.35 0.01 90)">He still remembered the day his father taught him to read the clouds.</div>
+            </div>
+            <div style="flex-shrink:0;font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);background:oklch(0.92 0.03 200);padding:4px 10px;border-radius:20px;white-space:nowrap">Vocabulaire</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:6px;border-top:1px solid oklch(0.92 0.01 90)">
+            <div style="padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Ajouter au deck</div>
+            <div style="margin-left:auto;font-size:12.5px;font-weight:500;color:oklch(0.5 0.01 90)">Rafraîchir la phrase ↻</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid oklch(0.9 0.01 90)">
+        <div style="font-size:12.5px;color:oklch(0.55 0.01 90)">1 carte sera ajoutée à votre deck (max. 3 par exercice)</div>
+        <div style="padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Confirmer l'ajout au deck</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Fin de session (carte ajoutée au deck)</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center">
+      <div style="width:64px;height:64px;border-radius:50%;background:oklch(0.92 0.03 200);display:flex;align-items:center;justify-content:center;font-size:28px;color:oklch(0.4 0.11 200)">✓</div>
+      <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Exercice terminé !</div>
+      <div style="font-size:15px;line-height:1.6;color:oklch(0.45 0.01 90);max-width:420px">Score : 78/100&nbsp;<span style="color: oklch(0.5 0.01 90); font-size: 13px; text-align: start;">·&nbsp;</span>1 carte a été ajoutée à votre deck de révision.</div>
+      <div style="padding:16px 24px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:13px;color:oklch(0.5 0.01 90)">Il vous reste <span style="font-weight:600;color:oklch(0.3 0.01 90)">6 exercices</span> ce mois-ci.</div>
+      <div style="display:flex;gap:14px;margin-top:10px">
+        <div style="padding:13px 26px;border-radius:8px;font-size:14.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer">Nouvel exercice</div>
+        <div style="padding:13px 26px;border-radius:8px;font-size:14.5px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;cursor:pointer">Voir le deck de révision</div>
+      </div>
+    </div>
+  </div>
+</div>
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Deck de révision (traduire une carte)</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:26px">
+      <div style="width:100%;max-width:640px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600">Session de révision</div>
+            <div style="font-size:13px;color:oklch(0.5 0.01 90);margin-top:4px">Exercez vous · algorithme type SM-2</div>
+          </div>
+          <div style="font-size:13px;color:oklch(0.5 0.01 90)"><span style="font-weight:600;color:oklch(0.4 0.12 250)">5</span> nouvelles · <span style="font-weight:600;color:oklch(0.42 0.13 40)">3</span> apprentissage · <span style="font-weight:600;color:oklch(0.38 0.12 145)">6</span> révision</div>
+        </div>
+        <div style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer;white-space:nowrap;flex-shrink:0">Modifier la limite</div>
+      </div>
+
+      <div style="width:100%;max-width:640px;min-height:280px;padding:48px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);box-shadow:0 8px 24px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center">
+        <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.06em">Traduisez cette phrase</div>
+        <div style="font-family:'Source Serif 4',serif;font-size:24px;line-height:1.4;color:oklch(0.22 0.01 90);max-width:460px">Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+        <div style="width:100%;max-width:460px;padding:14px 18px;border-radius:8px;background:oklch(0.97 0.005 90);border:1px solid oklch(0.88 0.01 90);font-size:15px;color:oklch(0.4 0.01 90);text-align:left">Tapez votre traduction ici...</div>
+        <div style="margin-top:8px;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90)">Afficher la réponse</div>
+      </div>
+
+      <div style="width:100%;max-width:640px;display:flex;border-radius:10px;overflow:hidden;border:1px solid oklch(0.9 0.01 90)">
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">À revoir</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">10 min</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Difficile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">1 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Correcte</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">3 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Facile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">6 j</div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:640px;display:flex;align-items:center;justify-content:flex-end">
+        <div style="padding:11px 22px;border-radius:8px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Voir toutes les cartes du deck →</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Pop-in — réglage de la limite quotidienne</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="position:relative;display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:26px;filter:blur(2px);opacity:0.5">
+      <div style="width:100%;max-width:640px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600">Session de révision</div>
+            <div style="font-size:13px;color:oklch(0.5 0.01 90);margin-top:4px">Corrigez votre réponse</div>
+          </div>
+          <div style="font-size:13px;color:oklch(0.5 0.01 90)"><span style="font-weight:600;color:oklch(0.4 0.12 250)">5</span> nouvelles · <span style="font-weight:600;color:oklch(0.42 0.13 40)">3</span> apprentissage · <span style="font-weight:600;color:oklch(0.38 0.12 145)">6</span> révision</div>
+        </div>
+        <div style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90);white-space:nowrap;flex-shrink:0">Modifier la limite</div>
+      </div>
+
+      <div style="width:100%;max-width:640px;padding:40px 44px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);box-shadow:0 8px 24px rgba(0,0,0,0.06);display:flex;flex-direction:column;gap:22px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Phrase source</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:19px;line-height:1.4;color:oklch(0.3 0.01 90)">Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+        </div>
+        <div style="height:1px;background:oklch(0.92 0.01 90)"></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Votre réponse</div>
+          <div style="font-size:16px;line-height:1.6;color:oklch(0.3 0.01 90)">The waves came to die on the rocks with a <span style="background:oklch(0.94 0.09 25);text-decoration:underline wavy oklch(0.55 0.15 25);text-decoration-thickness:1.5px">regularity that reassured him</span>.</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Traduction de référence</div>
+          <div style="font-size:16px;line-height:1.6;color:oklch(0.25 0.01 90);font-weight:500">The waves came to die on the rocks with a <span style="color:oklch(0.4 0.11 200);font-weight:600">reassuring regularity</span>.</div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:640px;display:flex;border-radius:10px;overflow:hidden;border:1px solid oklch(0.9 0.01 90)">
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">À revoir</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">10 min</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Difficile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">1 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Correcte</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">3 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Facile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">6 j</div>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(32,30,29,0.35);display:flex;align-items:center;justify-content:center">
+      <div style="width:400px;background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:0 12px 40px rgba(0,0,0,0.18)">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="font-family:'Source Serif 4',serif;font-size:21px;font-weight:600">Limite quotidienne</div>
+          <div style="font-size:15px;color:oklch(0.55 0.01 90);cursor:pointer">✕</div>
+        </div>
+        <div style="font-size:13.5px;line-height:1.55;color:oklch(0.5 0.01 90)">Nombre de nouvelles cartes introduites chaque jour, en plus des révisions déjà dues.</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:20px 0">
+          <div style="width:38px;height:38px;border-radius:9px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:18px;color:oklch(0.4 0.01 90);cursor:pointer">–</div>
+          <div style="width:56px;text-align:center;font-family:'Source Serif 4',serif;font-size:30px;font-weight:600">10</div>
+          <div style="width:38px;height:38px;border-radius:9px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:18px;color:oklch(0.4 0.01 90);cursor:pointer">+</div>
+        </div>
+        <input type="range" min="0" max="40" value="10" style="width:100%;accent-color:oklch(0.45 0.09 200)">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:oklch(0.6 0.01 90)"><span>0</span><span>40</span></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div style="flex:1;padding:12px;border-radius:8px;text-align:center;font-size:14px;font-weight:600;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Annuler</div>
+          <div style="flex:1;padding:12px;border-radius:8px;text-align:center;font-size:14px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Enregistrer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+                <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Deck de révision (réponse révélée)</div>
+                <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:26px">
+      <div style="width:100%;max-width:640px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-family:'Source Serif 4',serif;font-size:26px;font-weight:600">Session de révision</div>
+            <div style="font-size:13px;color:oklch(0.5 0.01 90);margin-top:4px">Corrigez votre réponse</div>
+          </div>
+          <div style="font-size:13px;color:oklch(0.5 0.01 90)"><span style="font-weight:600;color:oklch(0.4 0.12 250)">5</span> nouvelles · <span style="font-weight:600;color:oklch(0.42 0.13 40)">3</span> apprentissage · <span style="font-weight:600;color:oklch(0.38 0.12 145)">6</span> révision</div>
+        </div>
+        <div style="padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer;white-space:nowrap;flex-shrink:0">Modifier la limite</div>
+      </div>
+
+      <div style="width:100%;max-width:640px;padding:40px 44px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);box-shadow:0 8px 24px rgba(0,0,0,0.06);display:flex;flex-direction:column;gap:22px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Phrase source</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:19px;line-height:1.4;color:oklch(0.3 0.01 90)">Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+        </div>
+        <div style="height:1px;background:oklch(0.92 0.01 90)"></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Votre réponse</div>
+          <div style="font-size:16px;line-height:1.6;color:oklch(0.3 0.01 90)">The waves came to die on the rocks with a <span style="background:oklch(0.94 0.09 25);text-decoration:underline wavy oklch(0.55 0.15 25);text-decoration-thickness:1.5px">regularity that reassured him</span>.</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:oklch(0.45 0.09 200);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Traduction de référence</div>
+          <div style="font-size:16px;line-height:1.6;color:oklch(0.25 0.01 90);font-weight:500">The waves came to die on the rocks with a <span style="color:oklch(0.4 0.11 200);font-weight:600">reassuring regularity</span>.</div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:640px;display:flex;border-radius:10px;overflow:hidden;border:1px solid oklch(0.9 0.01 90)">
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">À revoir</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">10 min</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Difficile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">1 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Correcte</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">3 j</div>
+        </div>
+        <div style="flex:1;padding:14px 8px;background:#fff;border-top:3px solid oklch(0.85 0.01 90);border-left:1px solid oklch(0.92 0.01 90);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+          <div style="font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Facile</div>
+          <div style="font-size:11.5px;color:oklch(0.55 0.01 90)">6 j</div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:640px;display:flex;align-items:center;justify-content:flex-end">
+        <div style="padding:11px 22px;border-radius:8px;font-size:13.5px;font-weight:500;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Voir toutes les cartes du deck →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Deck de révision (aucune carte due)</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:0 40px">
+      <div style="width:64px;height:64px;border-radius:50%;background:oklch(0.92 0.03 200);display:flex;align-items:center;justify-content:center;font-size:28px;color:oklch(0.4 0.11 200)">✓</div>
+      <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Aucune carte à réviser aujourd'hui</div>
+      <div style="font-size:15px;line-height:1.6;color:oklch(0.45 0.01 90);max-width:420px">Vous avez traité toutes les cartes dues, dans la limite de 10 nouvelles cartes par jour. Lancez un nouvel exercice, ajustez votre limite, ou revenez demain pour continuer.</div>
+      <div style="display:flex;gap:14px;margin-top:8px">
+        <div style="padding:13px 24px;border-radius:8px;font-size:14.5px;font-weight:600;border:1px solid oklch(0.88 0.01 90);color:oklch(0.4 0.01 90)">Modifier la limite quotidienne</div>
+        <div style="padding:13px 24px;border-radius:8px;font-size:14.5px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff">Retour à l'entraînement</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">États — boutons de notation (neutre/survol/cliqué)</div>
+        <div style="width:900px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:18px">
+          <div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:12px;font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">
+            <div></div><div>Neutre</div><div>Survol</div><div>Cliqué</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">À revoir</div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.85 0.01 90);background:#fff;text-align:center;font-size:13px;font-weight:500;color:oklch(0.4 0.01 90)">À revoir<div style="font-size:11px;color:oklch(0.55 0.01 90)">10 min</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.94 0.03 200);text-align:center;font-size:13px;font-weight:600;color:oklch(0.35 0.11 200)">À revoir<div style="font-size:11px;color:oklch(0.42 0.09 200)">10 min</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.45 0.09 200);text-align:center;font-size:13px;font-weight:600;color:#fff">À revoir<div style="font-size:11px;color:oklch(0.92 0.03 200)">10 min</div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Difficile</div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.85 0.01 90);background:#fff;text-align:center;font-size:13px;font-weight:500;color:oklch(0.4 0.01 90)">Difficile<div style="font-size:11px;color:oklch(0.55 0.01 90)">1 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.94 0.03 200);text-align:center;font-size:13px;font-weight:600;color:oklch(0.35 0.11 200)">Difficile<div style="font-size:11px;color:oklch(0.42 0.09 200)">1 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.45 0.09 200);text-align:center;font-size:13px;font-weight:600;color:#fff">Difficile<div style="font-size:11px;color:oklch(0.92 0.03 200)">1 j</div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Correcte</div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.85 0.01 90);background:#fff;text-align:center;font-size:13px;font-weight:500;color:oklch(0.4 0.01 90)">Correcte<div style="font-size:11px;color:oklch(0.55 0.01 90)">3 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.94 0.03 200);text-align:center;font-size:13px;font-weight:600;color:oklch(0.35 0.11 200)">Correcte<div style="font-size:11px;color:oklch(0.42 0.09 200)">3 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.45 0.09 200);text-align:center;font-size:13px;font-weight:600;color:#fff">Correcte<div style="font-size:11px;color:oklch(0.92 0.03 200)">3 j</div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Facile</div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.85 0.01 90);background:#fff;text-align:center;font-size:13px;font-weight:500;color:oklch(0.4 0.01 90)">Facile<div style="font-size:11px;color:oklch(0.55 0.01 90)">6 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.94 0.03 200);text-align:center;font-size:13px;font-weight:600;color:oklch(0.35 0.11 200)">Facile<div style="font-size:11px;color:oklch(0.42 0.09 200)">6 j</div></div>
+            <div style="padding:14px 8px;border-radius:8px;border:1px solid oklch(0.9 0.01 90);border-top:3px solid oklch(0.45 0.09 200);background:oklch(0.45 0.09 200);text-align:center;font-size:13px;font-weight:600;color:#fff">Facile<div style="font-size:11px;color:oklch(0.92 0.03 200)">6 j</div></div>
+          </div>
+        </div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Cartes du deck (liste)</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">&nbsp;Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Cartes du deck</div>
+        <div style="font-size:13px;color:oklch(0.55 0.01 90)">96 cartes</div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;cursor:pointer">
+          <span style="font-size:15px">+</span>Ajouter une carte
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:oklch(0.5 0.01 90)">
+          <span>Trier par</span>
+          <div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid oklch(0.88 0.01 90)">
+            <div style="padding:6px 12px;font-weight:500;color:oklch(0.4 0.01 90);cursor:pointer;background:#fff">CRÉÉE</div>
+            <div style="padding:6px 12px;font-weight:600;color:#fff;cursor:pointer;background:oklch(0.22 0.01 90)">DUE</div>
+          </div>
+          <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">↓</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0;border:1px solid oklch(0.9 0.01 90);border-radius:12px;overflow:hidden;background:#fff">
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;padding:14px 24px;background:oklch(0.96 0.005 90);font-size:11.5px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">
+          <div>Recto</div><div>Verso</div><div>CRÉÉE</div><div>DUE</div><div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Les vagues venaient mourir sur les rochers avec une régularité qui le rassurait.</div>
+          <div style="color:oklch(0.45 0.01 90)">The waves came to die on the rocks with a reassuring regularity.</div>
+          <div style="color:oklch(0.5 0.01 90)">5 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Dans 3 jours</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Le vieux pêcheur observait la mer depuis sa fenêtre, comme il le faisait chaque matin.</div>
+          <div style="color:oklch(0.45 0.01 90)">The old fisherman watched the sea from his window, as he did every morning.</div>
+          <div style="color:oklch(0.5 0.01 90)">5 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Dans 10 min</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Il se souvenait encore du jour où son père lui avait appris à lire les nuages.</div>
+          <div style="color:oklch(0.45 0.01 90)">He still remembered the day his father taught him to read the clouds.</div>
+          <div style="color:oklch(0.5 0.01 90)">11 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Aujourd'hui</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Un sommet mondial s'est ouvert hier pour discuter des enjeux climatiques.</div>
+          <div style="color:oklch(0.45 0.01 90)">A world summit opened yesterday to discuss climate issues.</div>
+          <div style="color:oklch(0.5 0.01 90)">2 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Dans 6 jours</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Ma grand-mère préparait ce plat tous les dimanches soir.</div>
+          <div style="color:oklch(0.45 0.01 90)">My grandmother used to make this dish every Sunday evening.</div>
+          <div style="color:oklch(0.5 0.01 90)">2 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Dans 1 jour</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.3fr 2.3fr 1fr 1.2fr 68px;align-items:center;padding:16px 24px;font-size:13.5px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Le musée a inauguré une exposition consacrée aux impressionnistes.</div>
+          <div style="color:oklch(0.45 0.01 90)">The museum opened an exhibition dedicated to the impressionists.</div>
+          <div style="color:oklch(0.5 0.01 90)">11 juil.</div>
+          <div style="color:oklch(0.5 0.01 90)">Aujourd'hui</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.4 0.01 90);cursor:pointer">✎</div>
+            <div style="width:24px;height:24px;border-radius:6px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(0.55 0.13 25);cursor:pointer">✕</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:flex-start">
+        <div style="font-size:13px;font-weight:500;color:oklch(0.4 0.01 90);cursor:pointer">← Retour à la session de révision</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">États — bouton "Ajouter une carte" (actif vs. bloqué par la limite)</div>
+        <div style="width:760px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;gap:40px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Normal — quota disponible</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;width:fit-content;cursor:pointer">
+              <span style="font-size:15px">+</span>Ajouter une carte
+            </div>
+            
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;letter-spacing:0.04em">Bloqué — limite atteinte</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;background:oklch(0.93 0.005 90);color:oklch(0.62 0.01 90);width:fit-content;cursor:not-allowed">
+              <svg width="13" height="13" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+              Ajouter une carte
+            </div>
+            
+          </div>
+        </div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Ajout manuel d'une carte</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:28px;max-width:640px">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:oklch(0.4 0.01 90);margin-bottom:14px;cursor:pointer">← Retour au deck</div>
+        <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Ajouter une carte manuellement</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Recto <span style="font-weight:400;color:oklch(0.55 0.01 90)">(texte source)</span></div>
+          <div style="padding:16px 18px;border-radius:8px;background:#fff;border:1px solid oklch(0.88 0.01 90);min-height:64px;font-family:'Source Serif 4',serif;font-size:15.5px;color:oklch(0.35 0.01 90)">Une phrase en français à mémoriser…</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Verso <span style="font-weight:400;color:oklch(0.55 0.01 90)">(traduction)</span></div>
+          <div style="padding:16px 18px;border-radius:8px;background:#fff;border:2px solid oklch(0.45 0.09 200);min-height:64px;font-size:15px;color:oklch(0.4 0.01 90)">Its English translation…</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+        <div style="padding:13px 26px;border-radius:8px;font-size:14.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer">Annuler</div>
+        <div style="padding:13px 26px;border-radius:8px;font-size:14.5px;font-weight:600;background:oklch(0.22 0.01 90);color:#fff;cursor:pointer">Ajouter la carte</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Écran — Suivi de progression</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:32px">
+      <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600">Suivi de progression</div>
+
+      <div style="display:flex;gap:20px">
+        <div style="flex:1;padding:20px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="font-size:12px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase;margin-bottom:6px">Exercices réalisés</div>
+          <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">142</div>
+        </div>
+        <div style="flex:1;padding:20px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:12px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">Score moyen</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:500;color:oklch(0.45 0.09 200)">
+              <span style="cursor:pointer;font-size:12px">‹</span>
+              <span>Juillet 2026</span>
+              <span style="cursor:pointer;font-size:12px">›</span>
+            </div>
+          </div>
+          <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;color:oklch(0.45 0.09 200)">81/100</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div style="flex:1.4;padding:24px 28px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:16px">Évolution du score</div>
+          <div style="display:flex;gap:8px">
+            <svg sc-camel-view-box="0 0 40 200" style="width:34px;height:200px;flex-shrink:0">
+              <text x="32" y="14" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">100</text>
+              <text x="32" y="102" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">50</text>
+              <text x="32" y="196" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">0</text>
+            </svg>
+            <svg sc-camel-view-box="0 0 560 220" style="width:100%;height:220px">
+              <line x1="0" y1="10" x2="560" y2="10" stroke="oklch(0.94 0.005 90)" stroke-width="1"></line>
+              <line x1="0" y1="102" x2="560" y2="102" stroke="oklch(0.94 0.005 90)" stroke-width="1"></line>
+              <polyline points="0,150 80,140 160,120 240,130 320,95 400,80 480,60 560,45" fill="none" stroke="oklch(0.45 0.09 200)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="0,150 80,140 160,120 240,130 320,95 400,80 480,60 560,45 560,200 0,200" fill="oklch(0.92 0.03 200)" opacity="0.5" stroke="none"></polyline>
+              <line x1="0" y1="199" x2="560" y2="199" stroke="oklch(0.85 0.01 90)" stroke-width="1"></line>
+              <text x="0" y="215" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="start">13 juin</text>
+              <text x="240" y="215" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="middle">2 juil.</text>
+              <text x="560" y="215" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">11 juil.</text>
+            </svg>
+          </div>
+        </div>
+        <div style="flex:1;padding:24px 28px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Exercices par semaine</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:oklch(0.5 0.01 90)">
+              <span style="cursor:pointer">‹</span>
+              <span style="cursor:pointer">›</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <svg sc-camel-view-box="0 0 40 200" style="width:34px;height:200px;flex-shrink:0">
+              <text x="32" y="14" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">20</text>
+              <text x="32" y="102" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">10</text>
+              <text x="32" y="196" font-size="11" fill="oklch(0.55 0.01 90)" text-anchor="end">0</text>
+            </svg>
+            <svg sc-camel-view-box="0 0 320 220" style="width:100%;height:220px">
+              <line x1="0" y1="10" x2="320" y2="10" stroke="oklch(0.94 0.005 90)" stroke-width="1"></line>
+              <line x1="0" y1="102" x2="320" y2="102" stroke="oklch(0.94 0.005 90)" stroke-width="1"></line>
+              <rect x="10" y="120" width="26" height="80" fill="oklch(0.92 0.03 200)"></rect>
+              <rect x="50" y="90" width="26" height="110" fill="oklch(0.92 0.03 200)"></rect>
+              <rect x="90" y="60" width="26" height="140" fill="oklch(0.45 0.09 200)"></rect>
+              <rect x="130" y="100" width="26" height="100" fill="oklch(0.92 0.03 200)"></rect>
+              <rect x="170" y="40" width="26" height="160" fill="oklch(0.45 0.09 200)"></rect>
+              <rect x="210" y="70" width="26" height="130" fill="oklch(0.92 0.03 200)"></rect>
+              <rect x="250" y="30" width="26" height="170" fill="oklch(0.45 0.09 200)"></rect>
+              <line x1="0" y1="199" x2="320" y2="199" stroke="oklch(0.85 0.01 90)" stroke-width="1"></line>
+              <text x="23" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S1</text>
+              <text x="63" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S2</text>
+              <text x="103" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S3</text>
+              <text x="143" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S4</text>
+              <text x="183" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S5</text>
+              <text x="223" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S6</text>
+              <text x="263" y="215" font-size="10" fill="oklch(0.55 0.01 90)" text-anchor="middle">S7</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0;border:1px solid oklch(0.9 0.01 90);border-radius:12px;overflow:hidden;background:#fff">
+        <div style="display:grid;grid-template-columns:2.2fr 1.6fr 1fr 1fr;padding:14px 24px;background:oklch(0.96 0.005 90);font-size:12px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">
+          <div>Titre</div><div>Critères</div><div>Score</div><div>Date</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.2fr 1.6fr 1fr 1fr;padding:16px 24px;font-size:14px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Le vieux pêcheur</div><div style="color:oklch(0.5 0.01 90)">Littéraire · B2</div><div style="font-weight:600;color:oklch(0.45 0.09 200)">78/100</div><div style="color:oklch(0.5 0.01 90)">11 juil.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.2fr 1.6fr 1fr 1fr;padding:16px 24px;font-size:14px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Sommet climatique</div><div style="color:oklch(0.5 0.01 90)">Journalistique · B2</div><div style="font-weight:600;color:oklch(0.45 0.09 200)">84/100</div><div style="color:oklch(0.5 0.01 90)">10 juil.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2.2fr 1.6fr 1fr 1fr;padding:16px 24px;font-size:14px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div>Recette de famille</div><div style="color:oklch(0.5 0.01 90)">Quotidien · B1</div><div style="font-weight:600;color:oklch(0.45 0.09 200)">91/100</div><div style="color:oklch(0.5 0.01 90)">9 juil.</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:12px;border-top:1px solid oklch(0.93 0.005 90)">
+          <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">↑</div>
+          <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">↓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">États — navigation du suivi de progression</div>
+        <div style="width:640px;padding:32px;border-radius:16px;background:#fff;border:1px solid oklch(0.9 0.01 90);display:flex;flex-direction:column;gap:18px">
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;font-size:11px;font-weight:600;color:oklch(0.5 0.01 90);text-transform:uppercase">
+            <div></div><div>Cliquable</div><div>Désactivé (fin de liste)</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Mois précédent ‹</div>
+            <div style="font-size:12px;color:oklch(0.45 0.09 200);cursor:pointer">‹</div>
+            <div style="font-size:12px;color:oklch(0.8 0.005 90);cursor:not-allowed">‹</div>
+          </div>
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Mois suivant ›</div>
+            <div style="font-size:12px;color:oklch(0.45 0.09 200);cursor:pointer">›</div>
+            <div style="font-size:12px;color:oklch(0.8 0.005 90);cursor:not-allowed">›</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Semaines préc. ‹</div>
+            <div style="font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">‹</div>
+            <div style="font-size:13px;color:oklch(0.82 0.005 90);cursor:not-allowed">‹</div>
+          </div>
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Semaines suiv. ›</div>
+            <div style="font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">›</div>
+            <div style="font-size:13px;color:oklch(0.82 0.005 90);cursor:not-allowed">›</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Trier ↑ (plus récent)</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">↑</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.92 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.8 0.005 90);cursor:not-allowed">↑</div>
+          </div>
+          <div style="display:grid;grid-template-columns:150px repeat(2,1fr);gap:12px;align-items:center">
+            <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Trier ↓ (plus ancien)</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.88 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.4 0.01 90);cursor:pointer">↓</div>
+            <div style="width:28px;height:28px;border-radius:8px;border:1px solid oklch(0.92 0.01 90);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.8 0.005 90);cursor:not-allowed">↓</div>
+          </div>
+
+          <div style="font-size:12px;color:oklch(0.55 0.01 90);padding-top:6px;border-top:1px solid oklch(0.92 0.01 90)">Désactivées lorsqu'on atteint la première/dernière période disponible, ou l'extrémité du tri.</div>
+        </div>
+
+      </div>
+
+      </div>
+    
+
+  
+  <p class="dv-tsub" style="margin-top:28px">Essayez : "ajoute l'écran d'onboarding" · "montre une version mobile" · "ajoute la liste complète du deck"</p>
+</section>
+
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">3</a><span class="dv-tname">Gestion du compte</span></div>
+  <p class="dv-tsub">"Gestion du compte" rejoint la liste principale de la sidebar. Connexion via Apple/Google uniquement : la page ne montre que le statut de connexion, la déconnexion et la suppression du compte.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel">Onglet dans la liste principale</div>
+      <p class="dv-odesc">"Gestion du compte" rejoint Entraînement / Deck / Progression dans la sidebar.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="display:flex;min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid oklch(0.9 0.01 90);padding:32px 24px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Source Serif 4',serif;font-size:23px;font-weight:600;letter-spacing:-0.01em">Versus</div>
+          <div style="width:26px;height:3px;border-radius:2px;background:oklch(0.45 0.09 200)"></div>
+        </div>
+        <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(0.5 0.01 90);cursor:pointer" title="Fermer la sidebar">«</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Entraînement</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Deck de révision</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500;color:oklch(0.4 0.01 90)">Progression</div>
+        <div style="padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600;background:oklch(0.92 0.03 200);color:oklch(0.32 0.09 200)">Gestion du compte</div>
+      </div>
+      <div style="margin-top:auto;padding:16px;border-radius:10px;background:oklch(0.96 0.005 90);font-size:12.5px;line-height:1.5;color:oklch(0.5 0.01 90)">
+        <div style="font-weight:600;color:oklch(0.3 0.01 90);margin-bottom:4px">Versus gratuit</div>
+        <div style="position:relative;height:18px">
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-a 7s ease-in-out infinite">7 exercices restants ce mois-ci</span>
+          <span style="position:absolute;top:0;left:0;white-space:nowrap;animation:dv-quota-b 7s ease-in-out infinite">Max. 3 cartes ajoutées par exercice</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;padding:48px 64px;display:flex;flex-direction:column;gap:28px;max-width:640px">
+      <div style="font-family:'Source Serif 4',serif;font-size:28px;font-weight:600">Gestion du compte</div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:oklch(0.3 0.01 90)">Connexion</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:8px;background:#fff;border:1px solid oklch(0.88 0.01 90)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:22px;height:22px;border-radius:6px;background:oklch(0.94 0.005 90);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:oklch(0.4 0.01 90)">G</div>
+              <div style="font-size:14.5px;color:oklch(0.3 0.01 90)">Connecté avec Google · camille.bernard@email.com</div>
+            </div>
+            <div style="font-size:12.5px;font-weight:500;color:oklch(0.55 0.01 90)">Géré par Google</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-radius:12px;background:#fff;border:1px solid oklch(0.9 0.01 90)">
+          <div style="font-size:14px;font-weight:600;color:oklch(0.3 0.01 90)">Se déconnecter</div>
+          <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer;white-space:nowrap">Se déconnecter</div>
+        </div>
+      </div>
+      <div style="height:1px;background:oklch(0.9 0.01 90)"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-radius:12px;background:oklch(0.98 0.02 25);border:1px solid oklch(0.9 0.05 25)">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:oklch(0.4 0.14 25)">Supprimer mon compte</div>
+          <div style="font-size:12.5px;color:oklch(0.5 0.1 25);margin-top:4px;max-width:360px">Action définitive : votre progression et vos decks seront supprimés.</div>
+        </div>
+        <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid oklch(0.6 0.15 25);color:oklch(0.45 0.15 25);white-space:nowrap;cursor:pointer">Supprimer le compte</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="font:600 12px ui-monospace,Menlo,monospace;color:oklch(0.45 0.09 200);margin-top:8px">Pop-in — confirmation de suppression du compte</div>
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="position:relative;min-height:900px;background:oklch(0.9 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90)">
+    <div style="position:absolute;inset:0;background:oklch(0.2 0.01 90 / 0.45)"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;padding:32px;border-radius:14px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:20px">
+      <div style="font-family:'Source Serif 4',serif;font-size:21px;font-weight:600;color:oklch(0.4 0.14 25)">Supprimer votre compte ?</div>
+      <div style="font-size:14px;line-height:1.6;color:oklch(0.45 0.01 90)">Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est définitive : votre progression, vos decks de révision et votre abonnement seront perdus.</div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:6px">
+        <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid oklch(0.85 0.01 90);color:oklch(0.4 0.01 90);cursor:pointer">Annuler</div>
+        <div style="padding:11px 20px;border-radius:8px;font-size:13.5px;font-weight:600;background:oklch(0.5 0.18 25);color:#fff;cursor:pointer">Supprimer définitivement</div>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Essayez : "ajoute une section Notifications" · "ajoute la déconnexion" · "montre la version mobile des paramètres"</p>
+</section>
+
+
+
+<section class="dv-turn" id="t5" style="display:none">
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel">A — Minimal, anneau qui tourne</div>
+      <p class="dv-odesc">Version épurée façon splash : anneau fin en rotation autour du monogramme, barre de progression, message qui défile. Le plus proche du système actuel, en plus dépouillé.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px">
+    <div style="position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;border:3px solid oklch(0.92 0.01 90)"></div>
+      <div style="position:absolute;inset:0;border-radius:50%;border:3px solid transparent;border-top-color:oklch(0.45 0.09 200);animation:dv-spin 1.1s linear infinite"></div>
+      <div style="font-family:'Source Serif 4',serif;font-size:34px;font-weight:600;color:oklch(0.45 0.09 200)">V</div>
+    </div>
+    <div style="width:320px;height:4px;border-radius:2px;background:oklch(0.92 0.01 90);overflow:hidden">
+      <div style="height:100%;border-radius:2px;background:oklch(0.45 0.09 200);animation:dv-progress-fill 3.6s ease-in-out infinite"></div>
+    </div>
+    <div style="position:relative;height:22px;width:320px;text-align:center">
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-a 5.4s ease-in-out infinite">Analyse de vos critères…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-b 5.4s ease-in-out infinite">Rédaction du texte…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-c 5.4s ease-in-out infinite">Finalisation…</div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="5b">
+      <div class="dv-olabel">B — Éditorial, liste d'étapes</div>
+      <p class="dv-odesc">Pas de spinner : un titre serif, un trait qui balaie comme un signet, et une liste d'étapes numérotées qui s'éclairent une à une. Plus verbal, plus "manuscrit".</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:420px">
+      <div style="font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;line-height:1.2;text-align:center">Rédaction de votre texte<span style="animation:dv-cursor 1s step-end infinite">|</span></div>
+      <div style="width:100%;height:2px;background:oklch(0.9 0.01 90);position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background:oklch(0.45 0.09 200);animation:dv-sweep 3.2s ease-in-out infinite"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px;width:340px">
+      <div style="display:flex;align-items:center;gap:14px;animation:dv-step 3.6s ease-in-out infinite;animation-delay:0s">
+        <div style="width:22px;height:22px;border-radius:50%;background:oklch(0.45 0.09 200);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        <div style="font-size:14.5px">Analyse des critères choisis</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;animation:dv-step 3.6s ease-in-out infinite;animation-delay:1.2s">
+        <div style="width:22px;height:22px;border-radius:50%;background:oklch(0.45 0.09 200);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+        <div style="font-size:14.5px">Rédaction du texte source</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;animation:dv-step 3.6s ease-in-out infinite;animation-delay:2.4s">
+        <div style="width:22px;height:22px;border-radius:50%;background:oklch(0.45 0.09 200);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+        <div style="font-size:14.5px">Finalisation et mise en forme</div>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="5c">
+      <div class="dv-olabel">C — Le document se révèle</div>
+      <p class="dv-odesc">Aperçu du futur texte : des lignes floues qui se précisent progressivement, comme si le document se rédigeait sous vos yeux. Pourcentage discret en en-tête plutôt qu'une barre.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:7px;height:7px;border-radius:50%;background:oklch(0.45 0.09 200);animation:dv-step 1.4s ease-in-out infinite"></div>
+      <div style="font-size:13px;font-weight:600;color:oklch(0.45 0.09 200);letter-spacing:0.03em;text-transform:uppercase">Génération en cours</div>
+    </div>
+    <div style="width:460px;background:#fff;border:1px solid oklch(0.9 0.01 90);border-radius:10px;padding:40px 44px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <div style="height:15px;width:88%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:0s"></div>
+      <div style="height:15px;width:100%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:.3s"></div>
+      <div style="height:15px;width:64%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:.6s"></div>
+      <div style="height:15px;width:0;margin-top:6px"></div>
+      <div style="height:15px;width:94%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:.9s"></div>
+      <div style="height:15px;width:78%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:1.2s"></div>
+      <div style="height:15px;width:90%;border-radius:3px;background:oklch(0.3 0.01 90);animation:dv-resolve 3.6s ease-in-out infinite;animation-delay:1.5s"></div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Essayez : "j'aime bien 5b, applique-le aux trois écrans de chargement" · "combine 5a et 5c"</p>
+</section>
+
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Pages de chargement</span></div>
+  <p class="dv-tsub">3 écrans plein page : le document se révèle progressivement (lignes floues → nettes), un seul monogramme "V", sans barre de progression. Génération du texte, correction de la traduction, et démarrage de l'app.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel">Génération du texte</div>
+      <p class="dv-odesc">Affiché après "Générer le texte", pendant la création du nouveau texte à traduire.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+    <div style="font-family:'Source Serif 4',serif;font-size:38px;font-weight:600;color:oklch(0.22 0.01 90)">V</div>
+    <div style="width:320px;height:5px;border-radius:3px;background:oklch(0.92 0.01 90);overflow:hidden">
+      <div style="height:100%;border-radius:3px;background:oklch(0.45 0.09 200);animation:dv-progress-fill 3.6s ease-in-out infinite"></div>
+    </div>
+    <div style="position:relative;height:20px;width:320px;text-align:center">
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-a 5.4s ease-in-out infinite">Analyse de vos critères…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-b 5.4s ease-in-out infinite">Rédaction du texte…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-c 5.4s ease-in-out infinite">Finalisation…</div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel">Correction de la traduction</div>
+      <p class="dv-odesc">Affiché après "Soumettre ma traduction", pendant le calcul du score et de la correction.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+    <div style="font-family:'Source Serif 4',serif;font-size:38px;font-weight:600;color:oklch(0.22 0.01 90)">V</div>
+    <div style="width:320px;height:5px;border-radius:3px;background:oklch(0.92 0.01 90);overflow:hidden">
+      <div style="height:100%;border-radius:3px;background:oklch(0.45 0.09 200);animation:dv-progress-fill 3.6s ease-in-out infinite"></div>
+    </div>
+    <div style="position:relative;height:20px;width:320px;text-align:center">
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-a 5.4s ease-in-out infinite">Lecture de votre traduction…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-b 5.4s ease-in-out infinite">Comparaison avec la référence…</div>
+      <div style="position:absolute;inset:0;font-size:14px;color:oklch(0.5 0.01 90);animation:dv-load-c 5.4s ease-in-out infinite">Calcul du score…</div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="4c">
+      <div class="dv-olabel">Démarrage de l'app (splash screen)</div>
+      <p class="dv-odesc">Écran affiché brièvement à l'ouverture de l'app, avant la sidebar et le premier écran.</p>
+      <div class="dv-stack">
+        <div class="dv-card" style="width:1440px;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.12)">
+  <div style="min-height:900px;background:oklch(0.98 0.005 90);font-family:'IBM Plex Sans',sans-serif;color:oklch(0.22 0.01 90);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+    <div style="font-family:'Source Serif 4',serif;font-size:38px;font-weight:600;color:oklch(0.22 0.01 90)">V</div>
+    <div style="width:320px;height:5px;border-radius:3px;background:oklch(0.92 0.01 90);overflow:hidden">
+      <div style="height:100%;border-radius:3px;background:oklch(0.45 0.09 200);animation:dv-progress-fill 3.6s ease-in-out infinite"></div>
+    </div>
+    <div style="position:relative;height:20px;width:320px;text-align:center">
+      <div style="font-size:14px;color:oklch(0.5 0.01 90)">Chargement de votre espace d'entraînement…</div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Essayez : "ajoute un écran d'erreur réseau" · "ajoute un état vide pour le deck"</p>
+</section>
+
+</x-dc>
+</body>
+</html>
