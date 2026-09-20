@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { z } from "zod";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
@@ -18,28 +19,32 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey });
 }
 
-/** Extracts and parses the first top-level JSON object found in a string. */
-function parseJsonBlock(text: string): unknown {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("The model did not return a JSON object.");
-  }
-  return JSON.parse(text.slice(start, end + 1));
-}
-
-async function complete(prompt: string, maxTokens: number): Promise<string> {
+/**
+ * Calls Claude with a single forced tool call and returns the tool's
+ * structured input directly. This sidesteps the classic "ask the model for
+ * JSON in prose" failure mode entirely — Claude's tool-use path generates
+ * schema-constrained JSON server-side, so there's no free-text JSON to
+ * mis-parse (stray quotes, unescaped newlines, prose around the object).
+ */
+async function completeWithTool(
+  prompt: string,
+  tool: Tool,
+  maxTokens: number
+): Promise<unknown> {
   const client = getClient();
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
+    tools: [tool],
+    tool_choice: { type: "tool", name: tool.name },
   });
-  const textBlock = message.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("The model did not return a text response.");
+
+  const toolUse = message.content.find((block) => block.type === "tool_use");
+  if (!toolUse || toolUse.type !== "tool_use") {
+    throw new Error("The model did not return a tool call.");
   }
-  return textBlock.text;
+  return toolUse.input;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,6 +58,20 @@ const generatedExerciseSchema = z.object({
 });
 
 export type GeneratedExercise = z.infer<typeof generatedExerciseSchema>;
+
+const generateExerciseTool: Tool = {
+  name: "submit_exercise",
+  description: "Submit the generated French exercise text.",
+  input_schema: {
+    type: "object",
+    properties: {
+      title: { type: "string", description: "Short title, 3 to 6 words." },
+      sourceText: { type: "string", description: "The French exercise text, 130-170 words." },
+      wordCount: { type: "integer", description: "Exact word count of sourceText." },
+    },
+    required: ["title", "sourceText", "wordCount"],
+  },
+};
 
 const TEXT_TYPE_PROMPTS: Record<string, string> = {
   LITERARY: "littéraire (registre narratif, soigné)",
@@ -76,12 +95,10 @@ Contraintes :
 - Le texte doit être cohérent, autonome (pas besoin de contexte externe), et adapté à un exercice de traduction.
 - Donne aussi un titre court (3 à 6 mots).
 
-Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact suivant :
-{"title": "...", "sourceText": "...", "wordCount": <nombre entier de mots dans sourceText>}`;
+Appelle l'outil submit_exercise avec le résultat.`;
 
-  const raw = await complete(prompt, 1500);
-  const parsed = generatedExerciseSchema.parse(parseJsonBlock(raw));
-  return parsed;
+  const result = await completeWithTool(prompt, generateExerciseTool, 1500);
+  return generatedExerciseSchema.parse(result);
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +129,67 @@ const correctionResultSchema = z.object({
 
 export type CorrectionResult = z.infer<typeof correctionResultSchema>;
 
+const sentenceCorrectionJsonSchema = {
+  type: "object" as const,
+  properties: {
+    source: { type: "string", description: "The French source sentence." },
+    userText: { type: "string", description: "The learner's translation of this sentence." },
+    highlight: {
+      type: ["string", "null"],
+      description:
+        "The exact substring of userText to flag, verbatim. Null if the sentence is correct.",
+    },
+    category: {
+      type: "string",
+      description: "e.g. Registre, Temps verbal, Vocabulaire, Grammaire, Syntaxe, Correct.",
+    },
+    comment: { type: "string", description: "Short comment explaining the issue (or praise)." },
+  },
+  required: ["source", "userText", "highlight", "category", "comment"],
+};
+
+const suggestedCardJsonSchema = {
+  type: "object" as const,
+  properties: {
+    front: { type: "string", description: "French source sentence." },
+    back: { type: "string", description: "Reference English translation." },
+    category: { type: "string" },
+  },
+  required: ["front", "back", "category"],
+};
+
+const correctTranslationTool: Tool = {
+  name: "submit_correction",
+  description: "Submit the graded correction for the learner's translation.",
+  input_schema: {
+    type: "object",
+    properties: {
+      overallScore: { type: "integer", description: "0-100 overall translation quality." },
+      adjustedScore: {
+        type: "integer",
+        description: "0-100, adjusted to be more lenient for the learner's CEFR level.",
+      },
+      referenceTranslation: {
+        type: "string",
+        description: "Full idiomatic reference translation of the entire source text.",
+      },
+      sentenceCorrections: { type: "array", items: sentenceCorrectionJsonSchema },
+      suggestedCards: {
+        type: "array",
+        description: "2 to 4 sentences worth turning into flashcards.",
+        items: suggestedCardJsonSchema,
+      },
+    },
+    required: [
+      "overallScore",
+      "adjustedScore",
+      "referenceTranslation",
+      "sentenceCorrections",
+      "suggestedCards",
+    ],
+  },
+};
+
 export async function correctTranslation(params: {
   sourceText: string;
   userTranslation: string;
@@ -131,28 +209,22 @@ ${params.userTranslation}
 
 Tâche :
 1. Découpe le texte source en phrases et compare chaque phrase à la portion correspondante de la traduction de l'apprenant.
-2. Pour chaque phrase, identifie le principal problème (s'il y en a un) : registre, temps verbal, vocabulaire, grammaire, syntaxe, etc. Si une portion précise du texte de l'apprenant illustre le problème, indique-la exactement telle qu'elle apparaît dans "userText" (champ "highlight"). Si la phrase est correcte, mets "highlight" à null et un commentaire positif bref.
+2. Pour chaque phrase, identifie le principal problème (s'il y en a un) : registre, temps verbal, vocabulaire, grammaire, syntaxe, etc. Si une portion précise du texte de l'apprenant illustre le problème, indique-la exactement telle qu'elle apparaît dans userText (champ highlight). Si la phrase est correcte, mets highlight à null et un commentaire positif bref (catégorie "Correct").
 3. Donne une traduction de référence complète et idiomatique du texte source entier.
 4. Attribue un score global sur 100 (qualité générale de la traduction) et un score ajusté sur 100 qui tient compte du niveau ${params.level} de l'apprenant (plus indulgent qu'un correcteur natif ne le serait, en valorisant la maîtrise attendue à ce niveau).
 5. Suggère 2 à 4 phrases (parmi les phrases du texte) à ajouter à un deck de révision (flashcards), avec leur traduction de référence, en priorisant celles où l'apprenant a fait une erreur.
 
-Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, au format exact suivant :
-{
-  "overallScore": <entier 0-100>,
-  "adjustedScore": <entier 0-100>,
-  "referenceTranslation": "...",
-  "sentenceCorrections": [
-    {"source": "...", "userText": "...", "highlight": "..." | null, "category": "...", "comment": "..."}
-  ],
-  "suggestedCards": [
-    {"front": "...", "back": "...", "category": "..."}
-  ]
-}`;
+Appelle l'outil submit_correction avec le résultat.`;
 
-  const raw = await complete(prompt, 4000);
-  const parsed = correctionResultSchema.parse(parseJsonBlock(raw));
-  return parsed;
+  const result = await completeWithTool(prompt, correctTranslationTool, 4000);
+  return correctionResultSchema.parse(result);
 }
+
+const suggestCardTool: Tool = {
+  name: "submit_card",
+  description: "Submit a single replacement flashcard suggestion.",
+  input_schema: suggestedCardJsonSchema,
+};
 
 export async function suggestReplacementCard(params: {
   sourceText: string;
@@ -171,9 +243,8 @@ Les phrases suivantes ont déjà été suggérées, ne les répète pas : ${
 
 Choisis une autre phrase du texte (idéalement une qui illustre une difficulté de traduction utile à mémoriser) et donne sa traduction de référence en anglais, ainsi qu'une courte catégorie (ex: Vocabulaire, Temps verbal, Registre, Syntaxe).
 
-Réponds UNIQUEMENT avec un objet JSON valide, au format exact :
-{"front": "...", "back": "...", "category": "..."}`;
+Appelle l'outil submit_card avec le résultat.`;
 
-  const raw = await complete(prompt, 500);
-  return suggestedCardSchema.parse(parseJsonBlock(raw));
+  const result = await completeWithTool(prompt, suggestCardTool, 500);
+  return suggestedCardSchema.parse(result);
 }
