@@ -113,10 +113,25 @@ model MonthlyUsage {
   @@unique([userId, yearMonth])
 }
 
+// SRS parameters are per-user and DB-configurable (see lib/srs.ts) — no
+// dedicated admin UI yet, but nothing about the scheduling math is
+// hardcoded against these fields, so one can be added later without
+// touching business logic.
 model UserSettings {
-  id                 String @id @default(cuid())
-  userId             String @unique
-  dailyNewCardLimit  Int    @default(10)
+  id                     String @id @default(cuid())
+  userId                 String @unique
+  dailyNewCardLimit      Int    @default(10)
+  // Nullable rather than given a JSON default: Prisma's SQLite migration
+  // generator emits an unquoted (invalid-as-JSON) DEFAULT clause for Json
+  // fields — e.g. DEFAULT [1,10] instead of DEFAULT '[1,10]' — which
+  // SQLite silently mis-stores. lib/deck.ts#getSrsConfig() falls back to
+  // DEFAULT_SRS_CONFIG when these are null instead.
+  learningStepsMinutes   Json?
+  relearningStepsMinutes Json?
+  graduatingIntervalDays Float  @default(1)
+  easyIntervalDays       Float  @default(4)
+  minimumIntervalDays    Float  @default(1)
+  easeFactorFloor        Float  @default(130)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -175,9 +190,12 @@ model Translation {
   exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
 }
 
-// AI-graded correction for an exercise. sentenceCorrections and
-// suggestedCards are structured JSON produced by the grading model —
-// see lib/ai.ts for the exact shape.
+// Correction for an exercise. The AI (lib/ai.ts, "Appel 3") only
+// classifies errors into the fixed 9-category taxonomy — it never
+// computes a score. overallScore/adjustedScore are always derived
+// server-side (lib/scoring.ts) from the fixed penalty table, so the
+// model can't silently get an addition wrong. sentenceCorrections and
+// suggestedCards are structured JSON — see lib/ai.ts for the exact shape.
 model Correction {
   id                   String   @id @default(cuid())
   exerciseId           String   @unique
@@ -195,10 +213,15 @@ model Correction {
 // Flashcard deck (SM-2-style spaced repetition)
 // ---------------------------------------------------------------------------
 
+// Mirrors the 4-state model in the spaced-repetition spec exactly:
+// nouvelle/apprentissage/revision/re_apprentissage. Learning and
+// relearning share mechanics (step ladders, in minutes) but use
+// different step lists and are tracked as distinct states, per spec.
 enum CardState {
   NEW
   LEARNING
   REVIEW
+  RELEARNING
 }
 
 model Flashcard {
@@ -208,9 +231,14 @@ model Flashcard {
   back             String
   state            CardState @default(NEW)
   dueAt            DateTime  @default(now())
-  intervalMinutes  Int       @default(0)
-  easeFactor       Float     @default(2.5)
-  repetitions      Int       @default(0)
+  // Position within the current learning/relearning step ladder.
+  currentStep      Int       @default(0)
+  // Only meaningful once the card has graduated to REVIEW — the day-based
+  // interval that grows multiplicatively with easeFactor.
+  intervalDays      Float    @default(0)
+  // Percentage, e.g. 250 == x2.5 (matches the spec's convention, not a
+  // 0-1 decimal), floored at UserSettings.easeFactorFloor.
+  easeFactor       Float     @default(250)
   sourceExerciseId String?
   createdAt        DateTime  @default(now())
 

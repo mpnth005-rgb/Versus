@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { suggestReplacementCard, AiNotConfiguredError } from "@/lib/ai";
+import type { ErrorType } from "@/lib/scoring";
 
 const bodySchema = z.object({ index: z.number().int().nonnegative() });
 
@@ -33,16 +34,17 @@ export async function POST(
   const cards = exercise.correction.suggestedCards as Array<{
     front: string;
     back: string;
-    category: string;
+    category: ErrorType;
   }>;
   if (parsed.data.index >= cards.length) {
     return NextResponse.json({ error: "Index invalide." }, { status: 400 });
   }
 
   try {
+    const target = cards[parsed.data.index];
     const replacement = await suggestReplacementCard({
-      sourceText: exercise.sourceText,
-      existingFronts: cards.map((c) => c.front),
+      errorType: target.category,
+      previousFront: target.front,
     });
     const updated = [...cards];
     updated[parsed.data.index] = replacement;

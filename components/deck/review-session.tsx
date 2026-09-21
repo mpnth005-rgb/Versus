@@ -11,9 +11,9 @@ export type QueueCard = {
   front: string;
   back: string;
   state: CardState;
-  intervalMinutes: number;
+  currentStep: number;
+  intervalDays: number;
   easeFactor: number;
-  repetitions: number;
 };
 
 const RATINGS: Rating[] = ["AGAIN", "HARD", "GOOD", "EASY"];
@@ -98,9 +98,9 @@ export function ReviewSession({
   const card = queue[index];
   const previews = ratingPreviews({
     state: card.state,
-    intervalMinutes: card.intervalMinutes,
+    currentStep: card.currentStep,
+    intervalDays: card.intervalDays,
     easeFactor: card.easeFactor,
-    repetitions: card.repetitions,
   });
 
   async function rate(value: Rating) {

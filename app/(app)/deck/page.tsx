@@ -17,9 +17,9 @@ export default async function DeckPage() {
         front: c.front,
         back: c.back,
         state: c.state,
-        intervalMinutes: c.intervalMinutes,
+        currentStep: c.currentStep,
+        intervalDays: c.intervalDays,
         easeFactor: c.easeFactor,
-        repetitions: c.repetitions,
       }))}
       counts={counts}
       dailyNewCardLimit={dailyNewCardLimit}

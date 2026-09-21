@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { CorrectionView, type SentenceCorrection } from "@/components/training/correction-view";
+import { CorrectionView, type FlaggedSentence } from "@/components/training/correction-view";
 
 export default async function CorrectionPage({
   params,
@@ -34,7 +34,7 @@ export default async function CorrectionPage({
         overallScore: exercise.correction.overallScore,
         adjustedScore: exercise.correction.adjustedScore,
         referenceTranslation: exercise.correction.referenceTranslation,
-        sentenceCorrections: exercise.correction.sentenceCorrections as SentenceCorrection[],
+        flaggedSentences: exercise.correction.sentenceCorrections as FlaggedSentence[],
         suggestedCardsCount: suggestedCards.length,
         completed: exercise.status === "COMPLETED",
       }}

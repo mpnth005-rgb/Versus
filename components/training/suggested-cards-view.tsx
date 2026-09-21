@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export type SuggestedCard = { front: string; back: string; category: string };
+import { ERROR_TYPE_LABELS, type ErrorType } from "@/lib/scoring";
+
+export type SuggestedCard = { front: string; back: string; category: ErrorType };
 
 export function SuggestedCardsView({
   exerciseId,
@@ -114,7 +116,7 @@ export function SuggestedCardsView({
                   <div className="text-[15px] text-[oklch(0.35_0.01_90)]">{card.back}</div>
                 </div>
                 <div className="flex-shrink-0 whitespace-nowrap rounded-full bg-accent-light px-2.5 py-1 text-[11px] font-semibold text-accent">
-                  {card.category}
+                  {ERROR_TYPE_LABELS[card.category]}
                 </div>
               </div>
               <div className="flex items-center gap-2.5 border-t border-border-soft pt-1.5">

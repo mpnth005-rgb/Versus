@@ -1,26 +1,37 @@
 # Versus
 
 A French → English translation training app: generate a short text to
-translate, get sentence-by-sentence AI correction with a score, turn tricky
-sentences into spaced-repetition flashcards, and track progress over time.
-Sign-in is Google/Apple only, with a free tier (7 exercises/month) and a
-"Versus Upper" subscription (unlimited) via Stripe.
+translate, get sentence-by-sentence AI correction with a deterministic
+score, turn tricky sentences into spaced-repetition flashcards, and track
+progress over time. Sign-in is Google/Apple only, with a free tier (7
+exercises/month) and a "Versus Upper" subscription (unlimited) via Stripe.
 
 This is a real implementation (Next.js 16 App Router, Prisma/SQLite,
-Auth.js, Anthropic, Stripe) of the design in [`design/`](./design), which
-holds the original Claude Design handoff bundle for reference — read
-`design/README.md` and `design/chats/` if you want the original design
-intent, but treat this README as the source of truth for how the app
-actually works today.
+Auth.js, Anthropic, Stripe) of the design in [`design/`](./design) (the
+original Claude Design handoff) and the product/algorithm specs in
+[`specs/`](./specs) (correction rubric, double-score formula, AI system
+prompts, spaced-repetition algorithm) — read those if you want the
+original intent, but treat this README as the source of truth for how the
+app actually works today.
 
 ## Stack
 
 - **Next.js 16** (App Router, Turbopack, React 19)
 - **Prisma 7** + SQLite for local dev (driver adapter: `@prisma/adapter-better-sqlite3`)
 - **Auth.js (next-auth v5)** — Google + Apple OAuth, database sessions via the Prisma adapter
-- **Anthropic API** — exercise text generation and translation grading
+- **Anthropic API** — 4 separate calls (`lib/ai.ts`), matching `specs/` exactly:
+  1. generate the French exercise text
+  2. generate a sentence-aligned reference translation
+  3. classify the learner's translation into a fixed 9-error taxonomy —
+     **never computes a score**
+  4. regenerate a single suggested flashcard for one error type
+- **Deterministic scoring** (`lib/scoring.ts`) — the AI only classifies
+  errors; the score is always a server-side calculation from a fixed
+  penalty table, so a model arithmetic mistake can't silently corrupt it
 - **Stripe** — Versus Upper subscription checkout + billing portal
-- Hand-written SM-2-style spaced repetition for the flashcard deck (`lib/srs.ts`)
+- Spaced repetition (`lib/srs.ts`) — a faithful port of `specs/`' 4-state
+  SM-2-style algorithm (nouvelle/apprentissage/révision/ré-apprentissage,
+  step ladders, ease factor, ±10% fuzz), not a simplified approximation
 
 ## Running it
 
@@ -59,15 +70,43 @@ listening on `/api/billing/webhook` for `checkout.session.completed`,
 `customer.subscription.updated`/`created`/`deleted`. Locally, use
 `stripe listen --forward-to localhost:3000/api/billing/webhook`.
 
+## Scoring
+
+`lib/scoring.ts` implements the exact formula from `specs/Fiche de
+correction` + `specs/Fiche double score`: a fixed 9-category penalty
+table, `score = max(0, Note_max − Σ(pénalités))`, and
+`score_ajusté = max(0, Note_max − Σ(pénalités) × coefficient_niveau)`
+with coefficients A2×1.5 / B1×1.2 / B2×1.0 (reference — adjusted always
+equals raw at B2) / C1×0.7.
+
+One deliberate deviation from the spec: the spec's worked examples use a
+`/20` scale; this app's screens (from the original design) show `/100`.
+Rather than picking one and breaking the other, the penalty table here is
+the spec's table scaled ×5 — every ratio and the B2-reference property
+are preserved exactly, only the base changed.
+
+## Spaced repetition
+
+`lib/srs.ts` is a direct port of `specs/Spécification — Algorithme de
+répétition espacée`'s reference Python: 4 states (`NEW` enters `LEARNING`
+directly on first review), learning/relearning share step-ladder mechanics
+with different step lists, only `REVIEW` reasons in days and applies
+±10% fuzz. Verified against the spec's own worked trace (§8) — the ease
+factor and state sequence match exactly; only day-interval values differ,
+which the spec itself attributes to fuzz.
+
+Per-user SRS parameters (`UserSettings.learningStepsMinutes` etc.) are
+DB-configurable — nothing in `lib/srs.ts` hardcodes them — but there's no
+admin UI to edit them yet.
+
 ## Data model
 
 See `prisma/schema.prisma`. Notable choices:
 
-- AI output (sentence corrections, suggested flashcards) is stored as
-  structured JSON (validated with Zod on the way out of `lib/ai.ts`), not
-  raw HTML — the correction screen highlights the flagged substring by
-  plain string matching client-side, so there's no `dangerouslySetInnerHTML`
-  anywhere.
+- AI output is stored as structured JSON, produced via Anthropic
+  tool-calling (forced `tool_choice`) rather than "reply with JSON" in
+  free text — Claude's tool-use path generates schema-constrained JSON
+  server-side, so there's nothing to mis-parse.
 - The free-tier "7 exercises/month" quota is tracked in `MonthlyUsage`
   (per user, per `"YYYY-MM"`). The "max 3 cards per exercise" quota is
   enforced when confirming suggested flashcards, not on manual card
@@ -77,14 +116,15 @@ See `prisma/schema.prisma`. Notable choices:
   built (`lib/deck.ts`). It's not backed by a "cards introduced today" log,
   so it's a per-fetch cap rather than a strict once-per-day guarantee —
   fine at this app's scale, but worth knowing if you extend it.
+- `UserSettings.learningStepsMinutes`/`relearningStepsMinutes` are
+  `Json?` (nullable, no DB default): Prisma's SQLite migration generator
+  emits an invalid unquoted `DEFAULT [1,10]` clause for `Json @default()`
+  fields, which SQLite silently mis-stores as garbage. The fallback lives
+  in `lib/deck.ts#getSrsConfig` instead.
 
 ## Known simplifications
 
-- The SM-2 variant in `lib/srs.ts` is simplified to match the four-button
-  UI (À revoir / Difficile / Correcte / Facile) rather than implementing
-  the full quality-graded SM-2 formula.
-- "Rafraîchir la phrase" on the suggested-cards screen calls the AI again
-  for a single replacement suggestion (`lib/ai.ts#suggestReplacementCard`),
-  it doesn't just shuffle a pre-fetched pool.
 - No email/password auth exists by design — Google/Apple only, per the
   original spec.
+- No admin UI for the SRS parameters (see above) — DB-configurable, not
+  yet exposed in a settings screen.

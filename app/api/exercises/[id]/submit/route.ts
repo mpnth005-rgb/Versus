@@ -3,15 +3,17 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { correctTranslation, AiNotConfiguredError } from "@/lib/ai";
+import {
+  generateReferenceTranslation,
+  classifyTranslation,
+  AiNotConfiguredError,
+} from "@/lib/ai";
+import { computeScores, type ErrorType } from "@/lib/scoring";
+import { countWords } from "@/lib/text";
 
 const bodySchema = z.object({
   translation: z.string().min(1),
 });
-
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
 
 export async function POST(
   req: NextRequest,
@@ -33,7 +35,7 @@ export async function POST(
     return NextResponse.json({ error: "Exercice introuvable." }, { status: 404 });
   }
 
-  const translationWordCount = wordCount(parsed.data.translation);
+  const translationWordCount = countWords(parsed.data.translation);
   if (translationWordCount < exercise.wordCount * 0.5) {
     return NextResponse.json(
       { error: "Votre traduction est trop courte (moins de 50% des mots attendus)." },
@@ -42,11 +44,23 @@ export async function POST(
   }
 
   try {
-    const result = await correctTranslation({
+    // Appel 2, then Appel 3 (see lib/ai.ts) — the reference translation is
+    // generated fresh at submission time rather than cached at exercise
+    // creation, so exercises abandoned before submission never cost that
+    // call.
+    const reference = await generateReferenceTranslation(exercise.sourceText);
+    const classification = await classifyTranslation({
       sourceText: exercise.sourceText,
+      reference,
       userTranslation: parsed.data.translation,
-      level: exercise.level,
     });
+
+    // Scoring is always computed here, deterministically, from the fixed
+    // penalty table — never trusted to the model. See lib/scoring.ts.
+    const errorTypes: ErrorType[] = classification.flaggedSentences.flatMap((s) =>
+      s.errors.map((e) => e.type)
+    );
+    const { overallScore, adjustedScore } = computeScores(errorTypes, exercise.level);
 
     await prisma.$transaction([
       prisma.translation.upsert({
@@ -61,19 +75,19 @@ export async function POST(
       prisma.correction.upsert({
         where: { exerciseId: id },
         update: {
-          overallScore: result.overallScore,
-          adjustedScore: result.adjustedScore,
-          referenceTranslation: result.referenceTranslation,
-          sentenceCorrections: result.sentenceCorrections,
-          suggestedCards: result.suggestedCards,
+          overallScore,
+          adjustedScore,
+          referenceTranslation: reference.traductionComplete,
+          sentenceCorrections: classification.flaggedSentences,
+          suggestedCards: classification.suggestedCards,
         },
         create: {
           exerciseId: id,
-          overallScore: result.overallScore,
-          adjustedScore: result.adjustedScore,
-          referenceTranslation: result.referenceTranslation,
-          sentenceCorrections: result.sentenceCorrections,
-          suggestedCards: result.suggestedCards,
+          overallScore,
+          adjustedScore,
+          referenceTranslation: reference.traductionComplete,
+          sentenceCorrections: classification.flaggedSentences,
+          suggestedCards: classification.suggestedCards,
         },
       }),
       prisma.exercise.update({ where: { id }, data: { status: "CORRECTED" } }),

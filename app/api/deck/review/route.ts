@@ -3,7 +3,8 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { scheduleCard, dueAtFromNow } from "@/lib/srs";
+import { scheduleCard } from "@/lib/srs";
+import { getSrsConfig } from "@/lib/deck";
 
 const bodySchema = z.object({
   cardId: z.string(),
@@ -26,24 +27,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Carte introuvable." }, { status: 404 });
   }
 
-  const next = scheduleCard(
+  const config = await getSrsConfig(session.user.id);
+  const { schedule, dueAt } = scheduleCard(
     {
       state: card.state,
-      intervalMinutes: card.intervalMinutes,
+      currentStep: card.currentStep,
+      intervalDays: card.intervalDays,
       easeFactor: card.easeFactor,
-      repetitions: card.repetitions,
     },
-    parsed.data.rating
+    parsed.data.rating,
+    config
   );
 
   await prisma.flashcard.update({
     where: { id: card.id },
     data: {
-      state: next.state,
-      intervalMinutes: next.intervalMinutes,
-      easeFactor: next.easeFactor,
-      repetitions: next.repetitions,
-      dueAt: dueAtFromNow(next.intervalMinutes),
+      state: schedule.state,
+      currentStep: schedule.currentStep,
+      intervalDays: schedule.intervalDays,
+      easeFactor: schedule.easeFactor,
+      dueAt,
     },
   });
 

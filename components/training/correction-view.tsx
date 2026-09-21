@@ -4,13 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ERROR_TYPE_LABELS, type ErrorType } from "@/lib/scoring";
 
-export type SentenceCorrection = {
-  source: string;
-  userText: string;
-  highlight: string | null;
-  category: string;
-  comment: string;
+export type SentenceError = {
+  type: ErrorType;
+  explanation: string;
+};
+
+export type FlaggedSentence = {
+  sentenceNumber: number;
+  sourceSentence: string;
+  userSentence: string;
+  errors: SentenceError[];
 };
 
 export type CorrectionData = {
@@ -20,25 +25,10 @@ export type CorrectionData = {
   overallScore: number;
   adjustedScore: number;
   referenceTranslation: string;
-  sentenceCorrections: SentenceCorrection[];
+  flaggedSentences: FlaggedSentence[];
   suggestedCardsCount: number;
   completed: boolean;
 };
-
-function HighlightedText({ text, highlight }: { text: string; highlight: string | null }) {
-  if (!highlight) return <>{text}</>;
-  const idx = text.indexOf(highlight);
-  if (idx === -1) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <span className="bg-danger-light underline decoration-wavy decoration-[1.5px] decoration-[oklch(0.55_0.15_25)]">
-        {highlight}
-      </span>
-      {text.slice(idx + highlight.length)}
-    </>
-  );
-}
 
 export function CorrectionView({ data }: { data: CorrectionData }) {
   const router = useRouter();
@@ -46,7 +36,8 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
 
-  const sentence = data.sentenceCorrections[index];
+  const sentence = data.flaggedSentences[index];
+  const hasErrors = data.flaggedSentences.length > 0;
 
   async function finishSession() {
     setFinishing(true);
@@ -102,12 +93,12 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
         </div>
       </div>
 
-      {sentence && (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-ink-softer">
-              Correction phrase par phrase
-            </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-ink-softer">
+            {hasErrors ? "Phrases à corriger" : "Correction phrase par phrase"}
+          </div>
+          {hasErrors && (
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
@@ -118,40 +109,44 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
                 ‹
               </button>
               <div className="text-[12.5px] font-medium text-muted-light">
-                {index + 1} / {data.sentenceCorrections.length}
+                {index + 1} / {data.flaggedSentences.length}
               </div>
               <button
                 type="button"
-                disabled={index === data.sentenceCorrections.length - 1}
+                disabled={index === data.flaggedSentences.length - 1}
                 onClick={() =>
-                  setIndex((i) => Math.min(data.sentenceCorrections.length - 1, i + 1))
+                  setIndex((i) => Math.min(data.flaggedSentences.length - 1, i + 1))
                 }
                 className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ›
               </button>
             </div>
-          </div>
+          )}
+        </div>
 
+        {hasErrors && sentence ? (
           <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-white px-6 py-5">
             <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
-              {sentence.source}
+              {sentence.sourceSentence}
             </div>
-            <div className="text-[15px] text-ink-softer">
-              <HighlightedText text={sentence.userText} highlight={sentence.highlight} />
-            </div>
-            <div
-              className={
-                "text-[13px] " +
-                (sentence.highlight ? "text-danger-text" : "text-accent-ink-soft")
-              }
-            >
-              <span className="font-semibold">{sentence.category} — </span>
-              {sentence.comment}
+            <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
+            <div className="flex flex-col gap-1.5 border-t border-border-soft pt-2.5">
+              {sentence.errors.map((error, i) => (
+                <div key={i} className="text-[13px] text-danger-text">
+                  <span className="font-semibold">{ERROR_TYPE_LABELS[error.type]} — </span>
+                  {error.explanation}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl border border-accent-border bg-accent-light px-6 py-5 text-[14px] text-accent-ink">
+            <span className="text-lg">✓</span>
+            Aucune erreur détectée — traduction fidèle au texte source.
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col gap-3 rounded-xl bg-paper-alt p-8">
         <div className="text-sm font-semibold text-ink-softer">
@@ -167,13 +162,23 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           {data.suggestedCardsCount} phrase{data.suggestedCardsCount === 1 ? "" : "s"}{" "}
           suggérée{data.suggestedCardsCount === 1 ? "" : "s"} pour votre deck de révision
         </div>
-        <button
-          type="button"
-          onClick={() => router.push(`/training/${data.exerciseId}/suggested-cards`)}
-          className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
-        >
-          Cartes suggérées →
-        </button>
+        {data.suggestedCardsCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => router.push(`/training/${data.exerciseId}/suggested-cards`)}
+            className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
+          >
+            Cartes suggérées →
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
+          >
+            Terminer la session
+          </button>
+        )}
       </div>
 
       <ConfirmDialog
