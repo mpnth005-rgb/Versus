@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserQuota } from "@/lib/quota";
+import { formatScore } from "@/lib/format";
 
 export default async function CompletePage({
   params,
@@ -33,7 +34,8 @@ export default async function CompletePage({
       </div>
       <div className="font-serif text-[28px] font-semibold text-ink">Exercice terminé !</div>
       <div className="max-w-[420px] text-[15px] leading-[1.6] text-muted-light">
-        Score : {exercise.correction?.overallScore ?? "—"}/100
+        Score :{" "}
+        {exercise.correction ? `${formatScore(exercise.correction.overallScore)}/20` : "—"}
         {cardsAdded > 0 && (
           <>
             {" "}

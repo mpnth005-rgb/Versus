@@ -6,6 +6,9 @@ const LINE_HEIGHT = 220;
 const LINE_TOP = 10;
 const LINE_BOTTOM = 199;
 
+// Score scale — see lib/scoring.ts (scores are out of 20).
+const SCORE_MAX = 20;
+
 export function buildScoreLinePoints(scores: number[]): {
   linePoints: string;
   areaPoints: string;
@@ -13,7 +16,8 @@ export function buildScoreLinePoints(scores: number[]): {
   height: number;
 } {
   const n = scores.length;
-  const yFor = (value: number) => LINE_TOP + ((100 - value) / 100) * (LINE_BOTTOM - LINE_TOP);
+  const yFor = (value: number) =>
+    LINE_TOP + ((SCORE_MAX - value) / SCORE_MAX) * (LINE_BOTTOM - LINE_TOP);
   const xFor = (i: number) => (n <= 1 ? LINE_WIDTH / 2 : (i * LINE_WIDTH) / (n - 1));
 
   const points = scores.map((s, i) => `${xFor(i)},${yFor(s)}`);
@@ -51,4 +55,4 @@ export function buildWeeklyBars(counts: number[]): {
   return { bars, width: Math.max(width, 320), height: 220, axisMax };
 }
 
-export { LINE_TOP, LINE_BOTTOM };
+export { LINE_TOP, LINE_BOTTOM, SCORE_MAX };

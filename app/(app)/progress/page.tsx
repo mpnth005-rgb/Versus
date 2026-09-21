@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { getProgressOverview, getSessionsHistory } from "@/lib/progress";
-import { buildScoreLinePoints, buildWeeklyBars } from "@/lib/charts";
-import { formatShortDate } from "@/lib/format";
+import { buildScoreLinePoints, buildWeeklyBars, SCORE_MAX } from "@/lib/charts";
+import { formatShortDate, formatScore } from "@/lib/format";
 import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
 
 const MONTH_LABELS = [
@@ -85,7 +85,7 @@ export default async function ProgressPage({
             </div>
           </div>
           <div className="font-serif text-[28px] font-semibold text-accent">
-            {overview.avgScore !== null ? `${overview.avgScore}/100` : "—"}
+            {overview.avgScore !== null ? `${formatScore(overview.avgScore)}/20` : "—"}
           </div>
         </div>
       </div>
@@ -100,8 +100,8 @@ export default async function ProgressPage({
           ) : (
             <div className="flex gap-2">
               <svg viewBox="0 0 40 200" className="h-[200px] w-[34px] flex-shrink-0">
-                <text x="32" y="14" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">100</text>
-                <text x="32" y="102" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">50</text>
+                <text x="32" y="14" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">{SCORE_MAX}</text>
+                <text x="32" y="102" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">{SCORE_MAX / 2}</text>
                 <text x="32" y="196" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">0</text>
               </svg>
               <svg viewBox={`0 0 ${lineWidth} ${lineHeight}`} className="h-[220px] w-full">
@@ -171,7 +171,7 @@ export default async function ProgressPage({
               <div className="text-muted-light">
                 {TEXT_TYPE_LABELS[s.textType]} · {LEVEL_LABELS[s.level]}
               </div>
-              <div className="font-semibold text-accent">{s.score}/100</div>
+              <div className="font-semibold text-accent">{formatScore(s.score)}/20</div>
               <div className="text-muted-light">{formatShortDate(s.createdAt)}</div>
             </div>
           ))

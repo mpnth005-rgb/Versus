@@ -74,16 +74,17 @@ listening on `/api/billing/webhook` for `checkout.session.completed`,
 
 `lib/scoring.ts` implements the exact formula from `specs/Fiche de
 correction` + `specs/Fiche double score`: a fixed 9-category penalty
-table, `score = max(0, Note_max − Σ(pénalités))`, and
+table (out of 20), `score = max(0, Note_max − Σ(pénalités))`, and
 `score_ajusté = max(0, Note_max − Σ(pénalités) × coefficient_niveau)`
 with coefficients A2×1.5 / B1×1.2 / B2×1.0 (reference — adjusted always
-equals raw at B2) / C1×0.7.
+equals raw at B2) / C1×0.7. Verified against the spec's own worked
+example ("troufions", 6.5 points of penalties) — matches exactly at
+every level (13.5/20 raw; 10.25/12.2/13.5/15.45 adjusted for A2/B1/B2/C1).
 
-One deliberate deviation from the spec: the spec's worked examples use a
-`/20` scale; this app's screens (from the original design) show `/100`.
-Rather than picking one and breaking the other, the penalty table here is
-the spec's table scaled ×5 — every ratio and the B2-reference property
-are preserved exactly, only the base changed.
+Penalties are quarter-point increments, so scores are rarely whole
+numbers (`Correction.overallScore`/`adjustedScore` are `Float`, not
+`Int`) — `lib/format.ts#formatScore` renders them with a French decimal
+comma and no trailing zeros (e.g. `13,5`, not `13,50`).
 
 ## Spaced repetition
 

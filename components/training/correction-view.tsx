@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ERROR_TYPE_LABELS, type ErrorType } from "@/lib/scoring";
+import { formatScore } from "@/lib/format";
 
 export type SentenceError = {
   type: ErrorType;
@@ -78,8 +79,8 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
             Score global
           </div>
           <div className="font-serif text-[40px] font-semibold text-ink">
-            {data.overallScore}
-            <span className="text-xl text-muted-light">/100</span>
+            {formatScore(data.overallScore)}
+            <span className="text-xl text-muted-light">/20</span>
           </div>
         </div>
         <div className="flex flex-1 flex-col gap-1.5 rounded-xl border border-accent-border bg-accent-light p-7">
@@ -87,8 +88,8 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
             Score ajusté (niveau {data.level})
           </div>
           <div className="font-serif text-[40px] font-semibold text-accent-ink">
-            {data.adjustedScore}
-            <span className="text-xl text-accent-ink-soft">/100</span>
+            {formatScore(data.adjustedScore)}
+            <span className="text-xl text-accent-ink-soft">/20</span>
           </div>
         </div>
       </div>

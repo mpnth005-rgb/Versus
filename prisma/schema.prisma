@@ -199,8 +199,10 @@ model Translation {
 model Correction {
   id                   String   @id @default(cuid())
   exerciseId           String   @unique
-  overallScore         Int
-  adjustedScore        Int
+  // Out of 20, matching specs/Fiche double score — quarter-point
+  // penalties mean these are rarely whole numbers (e.g. 13.5, 10.25).
+  overallScore         Float
+  adjustedScore        Float
   referenceTranslation String
   sentenceCorrections  Json
   suggestedCards       Json

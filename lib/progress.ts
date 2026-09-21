@@ -38,7 +38,9 @@ export async function getProgressOverview(userId: string, selectedMonth?: string
   );
   const avgScore =
     monthExercises.length > 0
-      ? Math.round(monthExercises.reduce((sum, e) => sum + e.score, 0) / monthExercises.length)
+      ? Math.round(
+          (monthExercises.reduce((sum, e) => sum + e.score, 0) / monthExercises.length) * 100
+        ) / 100
       : null;
 
   const months = [

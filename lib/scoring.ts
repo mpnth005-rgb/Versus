@@ -6,11 +6,9 @@
 // an addition would silently corrupt every score, so the arithmetic
 // always happens here, in code, from a fixed penalty table.
 //
-// The spec's worked examples are on a /20 scale. The product's screens
-// (and the rest of this app) show scores out of 100, so the penalty
-// table below is the spec's table scaled by 5 — every ratio, every
-// level coefficient, and the B2-is-the-unadjusted-reference property
-// are preserved exactly; only the base (Note_max) differs.
+// Scores are out of 20, matching the spec's worked examples exactly
+// (e.g. the "troufions" example: 6.5 points of penalties on a B2 text
+// gives 13.5/20 raw and adjusted).
 
 export type ErrorType =
   | "FAUTE_DE_TEMPS"
@@ -47,19 +45,26 @@ export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
   FAUTE_DE_TON: "Faute de ton",
 };
 
-const NOTE_MAX = 100;
+const NOTE_MAX = 20;
 
 const PENALTY_TABLE: Record<ErrorType, number> = {
-  FAUTE_DE_TEMPS: 10,
-  CONTRESENS: 5,
-  FAUTE_DE_STYLE: 5,
-  FAUTE_DE_PREPOSITION: 2.5,
-  FAUTE_DE_VOCABULAIRE: 2.5,
-  FAUTE_DE_SYNTAXE: 2.5,
-  CALQUE: 2.5,
-  TRADUCTION_INEXACTE: 1.25,
-  FAUTE_DE_TON: 1.25,
+  FAUTE_DE_TEMPS: 2,
+  CONTRESENS: 1,
+  FAUTE_DE_STYLE: 1,
+  FAUTE_DE_PREPOSITION: 0.5,
+  FAUTE_DE_VOCABULAIRE: 0.5,
+  FAUTE_DE_SYNTAXE: 0.5,
+  CALQUE: 0.5,
+  TRADUCTION_INEXACTE: 0.25,
+  FAUTE_DE_TON: 0.25,
 };
+
+// Penalties are quarter-point increments, so results are always exact at
+// 2 decimals — this just guards against binary floating-point noise
+// (e.g. 6.5 * 1.2 === 7.800000000000001).
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 const LEVEL_COEFFICIENTS: Record<"A2" | "B1" | "B2" | "C1", number> = {
   A2: 1.5,
@@ -73,10 +78,10 @@ export function computeScores(
   level: "A2" | "B1" | "B2" | "C1"
 ): { overallScore: number; adjustedScore: number } {
   const totalPenalty = errorTypes.reduce((sum, type) => sum + PENALTY_TABLE[type], 0);
-  const overallScore = Math.max(0, Math.round(NOTE_MAX - totalPenalty));
+  const overallScore = Math.max(0, round2(NOTE_MAX - totalPenalty));
   const adjustedScore = Math.max(
     0,
-    Math.round(NOTE_MAX - totalPenalty * LEVEL_COEFFICIENTS[level])
+    round2(NOTE_MAX - totalPenalty * LEVEL_COEFFICIENTS[level])
   );
   return { overallScore, adjustedScore };
 }

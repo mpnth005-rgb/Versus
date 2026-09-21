@@ -1,3 +1,9 @@
+// Scores are quarter-point increments (see lib/scoring.ts) — French
+// decimal comma, and no trailing zeros for whole numbers (20 not 20,00).
+export function formatScore(score: number): string {
+  return score.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+}
+
 export function formatShortDate(date: Date): string {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date);
 }
