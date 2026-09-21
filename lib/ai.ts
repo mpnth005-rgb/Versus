@@ -61,6 +61,12 @@ async function completeWithTool(
     tool_choice: { type: "tool", name: tool.name },
   });
 
+  if (message.stop_reason === "max_tokens") {
+    throw new Error(
+      `The model hit the ${maxTokens}-token limit for tool "${tool.name}" before finishing its output — the tool call is truncated/incomplete. Increase maxTokens for this call.`
+    );
+  }
+
   const toolUse = message.content.find((block) => block.type === "tool_use");
   if (!toolUse || toolUse.type !== "tool_use") {
     throw new Error("The model did not return a tool call.");
@@ -220,7 +226,7 @@ Découpe ta traduction phrase par phrase, alignée sur le découpage en phrases 
 
 Appelle l'outil submit_reference_translation avec le résultat.`;
 
-  const result = await completeWithTool(prompt, generateReferenceTool, 1500);
+  const result = await completeWithTool(prompt, generateReferenceTool, 3000);
   return referenceTranslationSchema.parse(result);
 }
 
