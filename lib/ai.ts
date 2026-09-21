@@ -3,7 +3,7 @@ import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { z } from "zod";
 
 import { countWords } from "@/lib/text";
-import { ERROR_TYPES, type ErrorType } from "@/lib/scoring";
+import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -234,8 +234,13 @@ Appelle l'outil submit_reference_translation avec le résultat.`;
 // Appel 3 — Correction: error classification (never a score) + suggested cards
 // ---------------------------------------------------------------------------
 
+const errorTypeEnumSchema = z.preprocess(
+  normalizeErrorType,
+  z.enum(ERROR_TYPES as [ErrorType, ...ErrorType[]])
+);
+
 const sentenceErrorSchema = z.object({
-  type: z.enum(ERROR_TYPES as [ErrorType, ...ErrorType[]]),
+  type: errorTypeEnumSchema,
   explanation: z.string(),
 });
 
@@ -249,7 +254,7 @@ const flaggedSentenceSchema = z.object({
 const suggestedCardSchema = z.object({
   front: z.string(),
   back: z.string(),
-  category: z.enum(ERROR_TYPES as [ErrorType, ...ErrorType[]]),
+  category: errorTypeEnumSchema,
 });
 
 const classificationSchema = z.object({
@@ -351,17 +356,17 @@ Traduction soumise par l'utilisateur (texte libre, à aligner toi-même sur la n
 ${params.userTranslation}
 """
 
-Compare la traduction utilisateur à la traduction de référence, phrase par phrase, et identifie les erreurs selon EXACTEMENT ces 9 catégories (n'en invente aucune autre, n'en fusionne aucune) : faute_de_temps, contresens, faute_de_style, faute_de_preposition, faute_de_vocabulaire, faute_de_syntaxe, calque, traduction_inexacte, faute_de_ton.
+Compare la traduction utilisateur à la traduction de référence, phrase par phrase, et identifie les erreurs selon EXACTEMENT ces 9 catégories (n'en invente aucune autre, n'en fusionne aucune, et utilise le code exact — majuscules, underscores — dans le champ "type"/"category") : ${ERROR_TYPES.join(", ")}.
 
-- faute_de_temps : mauvais temps verbal.
-- contresens : sens contraire ou substantiellement différent du texte source (vérifie toujours le contexte avant de qualifier un terme de contresens).
-- faute_de_style : non-respect du style ou du rythme de la phrase source.
-- faute_de_preposition : préposition incorrecte pour le sens spatial/logique visé.
-- faute_de_vocabulaire : mot mal choisi, terme technique ou idiomatique manqué.
-- faute_de_syntaxe : structure grammaticale incorrecte en anglais (ex. comma splice).
-- calque : traduction mot-à-mot d'une structure française qui n'existe pas ainsi en anglais.
-- traduction_inexacte : sens proche mais imprécis, sans être un contresens.
-- faute_de_ton : registre ou ironie du texte source non restitués.
+- FAUTE_DE_TEMPS (${ERROR_TYPE_LABELS.FAUTE_DE_TEMPS}) : mauvais temps verbal.
+- CONTRESENS (${ERROR_TYPE_LABELS.CONTRESENS}) : sens contraire ou substantiellement différent du texte source (vérifie toujours le contexte avant de qualifier un terme de contresens).
+- FAUTE_DE_STYLE (${ERROR_TYPE_LABELS.FAUTE_DE_STYLE}) : non-respect du style ou du rythme de la phrase source.
+- FAUTE_DE_PREPOSITION (${ERROR_TYPE_LABELS.FAUTE_DE_PREPOSITION}) : préposition incorrecte pour le sens spatial/logique visé.
+- FAUTE_DE_VOCABULAIRE (${ERROR_TYPE_LABELS.FAUTE_DE_VOCABULAIRE}) : mot mal choisi, terme technique ou idiomatique manqué.
+- FAUTE_DE_SYNTAXE (${ERROR_TYPE_LABELS.FAUTE_DE_SYNTAXE}) : structure grammaticale incorrecte en anglais (ex. comma splice).
+- CALQUE (${ERROR_TYPE_LABELS.CALQUE}) : traduction mot-à-mot d'une structure française qui n'existe pas ainsi en anglais.
+- TRADUCTION_INEXACTE (${ERROR_TYPE_LABELS.TRADUCTION_INEXACTE}) : sens proche mais imprécis, sans être un contresens.
+- FAUTE_DE_TON (${ERROR_TYPE_LABELS.FAUTE_DE_TON}) : registre ou ironie du texte source non restitués.
 
 IMPORTANT — la traduction de référence est UN exemple valide, pas l'unique bonne réponse. N'attribue AUCUNE erreur du seul fait qu'une phrase s'écarte de la formulation de la référence : si la phrase de l'utilisateur est grammaticalement correcte, fidèle au sens et au registre du texte source, elle ne doit recevoir aucune pénalité, même si elle est formulée très différemment de la référence. Compare chaque phrase au texte source, jamais mot à mot à la référence.
 

@@ -66,6 +66,27 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+const ERROR_TYPE_SET = new Set<string>(ERROR_TYPES);
+
+/**
+ * Best-effort recovery for an AI-returned error-type string that's close
+ * to but not exactly an ErrorType (wrong case, accents, spaces instead
+ * of underscores) — e.g. "faute_de_temps" or "Contresens". Returns the
+ * input unchanged if it doesn't normalize to a known type, so the
+ * downstream z.enum() still rejects genuinely invalid values.
+ */
+export function normalizeErrorType(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const normalized = value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return ERROR_TYPE_SET.has(normalized) ? normalized : value;
+}
+
 const LEVEL_COEFFICIENTS: Record<"A2" | "B1" | "B2" | "C1", number> = {
   A2: 1.5,
   B1: 1.2,
