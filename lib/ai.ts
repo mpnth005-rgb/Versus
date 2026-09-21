@@ -40,18 +40,22 @@ function getClient(): Anthropic {
  * structured input directly. Claude's tool-use path generates
  * schema-constrained JSON server-side, so there's no free-text JSON to
  * mis-parse (stray quotes, unescaped newlines, prose around the object).
+ *
+ * No `temperature` param: the spec calls for per-call temperature tuning
+ * (high for generation variety, low for grading precision), but the API
+ * rejects it as deprecated for this model — 400 invalid_request_error,
+ * "`temperature` is deprecated for this model". Prompts lean on explicit
+ * instructions (e.g. "fais varier...") to get variety instead.
  */
 async function completeWithTool(
   prompt: string,
   tool: Tool,
-  maxTokens: number,
-  temperature: number
+  maxTokens: number
 ): Promise<unknown> {
   const client = getClient();
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
-    temperature,
     messages: [{ role: "user", content: prompt }],
     tools: [tool],
     tool_choice: { type: "tool", name: tool.name },
@@ -130,7 +134,7 @@ Génère un texte ORIGINAL en français répondant à ces critères :
 
 Appelle l'outil submit_exercise avec le résultat.`;
 
-  const result = await completeWithTool(prompt, generateExerciseTool, 1500, 0.95);
+  const result = await completeWithTool(prompt, generateExerciseTool, 1500);
   return generatedExerciseSchema.parse(result);
 }
 
@@ -216,7 +220,7 @@ Découpe ta traduction phrase par phrase, alignée sur le découpage en phrases 
 
 Appelle l'outil submit_reference_translation avec le résultat.`;
 
-  const result = await completeWithTool(prompt, generateReferenceTool, 1500, 0.3);
+  const result = await completeWithTool(prompt, generateReferenceTool, 1500);
   return referenceTranslationSchema.parse(result);
 }
 
@@ -361,7 +365,7 @@ Ensuite, propose entre 0 et 10 cartes de révision (0 si aucune erreur), chacune
 
 Appelle l'outil submit_classification avec le résultat.`;
 
-  const result = await completeWithTool(prompt, classifyTool, 4000, 0.25);
+  const result = await completeWithTool(prompt, classifyTool, 4000);
   return classificationSchema.parse(result);
 }
 
@@ -399,6 +403,6 @@ Génère UNE nouvelle phrase française courte (5-15 mots), autonome, qui isole 
 
 Appelle l'outil submit_card avec le résultat (category = "${params.errorType}").`;
 
-  const result = await completeWithTool(prompt, suggestCardTool, 500, 0.85);
+  const result = await completeWithTool(prompt, suggestCardTool, 500);
   return suggestedCardSchema.parse(result);
 }
