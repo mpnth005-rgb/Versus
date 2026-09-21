@@ -60,9 +60,9 @@ export function AppShell({ quota, children }: { quota: Quota; children: React.Re
   const pathname = usePathname();
 
   return (
-    <div className="relative flex min-h-screen bg-paper">
+    <div className="relative flex h-screen overflow-hidden bg-paper">
       {open && (
-        <div className="flex w-60 flex-shrink-0 flex-col gap-9 border-r border-border bg-white px-6 py-8">
+        <div className="flex h-screen w-60 flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
           <div className="flex items-center justify-between">
             <Logo />
             <button
@@ -110,7 +110,7 @@ export function AppShell({ quota, children }: { quota: Quota; children: React.Re
         </button>
       )}
 
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="h-screen min-w-0 flex-1 overflow-y-auto">{children}</div>
 
       <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
     </div>
