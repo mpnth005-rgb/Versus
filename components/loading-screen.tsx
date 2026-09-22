@@ -1,18 +1,17 @@
-const MESSAGES: Record<"generate" | "correct" | "splash", string[]> = {
+const MESSAGES: Record<"generate" | "correct", string[]> = {
   generate: ["Analyse de vos critères…", "Rédaction du texte…", "Finalisation…"],
   correct: [
     "Lecture de votre traduction…",
     "Comparaison avec la référence…",
     "Calcul du score…",
   ],
-  splash: ["Chargement de votre espace d'entraînement…"],
 };
 
-export function LoadingScreen({ variant }: { variant: "generate" | "correct" | "splash" }) {
+export function LoadingScreen({ variant }: { variant: "generate" | "correct" }) {
   const messages = MESSAGES[variant];
 
   return (
-    <div className="flex min-h-[900px] flex-col items-center justify-center gap-[30px] bg-paper">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-[30px] bg-paper">
       <div className="font-serif text-[38px] font-semibold text-ink">V</div>
       <div className="h-[5px] w-80 overflow-hidden rounded-[3px] bg-paper-alt-2">
         <div className="animate-progress-fill h-full rounded-[3px] bg-accent" />
