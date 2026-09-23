@@ -3,23 +3,44 @@
 // corrections, flashcards, monthly quota usage) while keeping the
 // account itself (login, subscription, settings) intact.
 //
-// Usage: node scripts/reset-account-data.cjs you@example.com
+// Usage:
+//   node scripts/reset-account-data.cjs --list        (see which accounts exist)
+//   node scripts/reset-account-data.cjs you@example.com
 const path = require("node:path");
 const Database = require("better-sqlite3");
 
-const email = process.argv[2];
-if (!email) {
-  console.error("Usage: node scripts/reset-account-data.cjs <email>");
-  process.exit(1);
-}
+const arg = process.argv[2];
 
 const dbPath = path.join(__dirname, "..", "dev.db");
 const db = new Database(dbPath);
 db.pragma("foreign_keys = ON");
 
+if (!arg || arg === "--list") {
+  const users = db
+    .prepare(
+      `SELECT u.id, u.email,
+              (SELECT COUNT(*) FROM Exercise WHERE userId = u.id) AS exercises,
+              (SELECT COUNT(*) FROM Flashcard WHERE userId = u.id) AS flashcards
+       FROM User u`
+    )
+    .all();
+  if (users.length === 0) {
+    console.log("No users in this database (dev.db) at all — nobody has ever logged in here.");
+  } else {
+    console.log("Accounts in this database:");
+    for (const u of users) {
+      console.log(`  ${u.email ?? "(no email)"} — ${u.exercises} exercise(s), ${u.flashcards} flashcard(s)`);
+    }
+  }
+  console.log("\nUsage: node scripts/reset-account-data.cjs <exact email from the list above>");
+  db.close();
+  process.exit(0);
+}
+
+const email = arg;
 const user = db.prepare("SELECT id, email FROM User WHERE email = ?").get(email);
 if (!user) {
-  console.error(`No user found with email ${email}.`);
+  console.error(`No user found with email ${email}. Run with --list to see the exact emails in this database.`);
   process.exit(1);
 }
 
