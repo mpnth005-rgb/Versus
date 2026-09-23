@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { NAV_ITEMS, FREE_MAX_CARDS_PER_EXERCISE } from "@/lib/constants";
+import { NAV_ITEMS } from "@/lib/constants";
 import type { Quota } from "@/lib/quota";
 import { UpsellModal } from "@/components/upsell-modal";
 
@@ -41,14 +41,9 @@ function QuotaWidget({ quota, onUpgradeClick }: { quota: Quota; onUpgradeClick: 
       className="mt-auto cursor-pointer rounded-[10px] bg-paper-alt p-4 text-left text-[12.5px] leading-[1.5] text-muted-light"
     >
       <div className="mb-1 font-semibold text-ink-softer">Versus gratuit</div>
-      <div className="relative h-[18px] overflow-hidden">
-        <span className="animate-quota-a absolute top-0 left-0 whitespace-nowrap">
-          {quota.exercisesRemaining} exercice{quota.exercisesRemaining === 1 ? "" : "s"} restant
-          {quota.exercisesRemaining === 1 ? "" : "s"} ce mois-ci
-        </span>
-        <span className="animate-quota-b absolute top-0 left-0 whitespace-nowrap">
-          Max. {FREE_MAX_CARDS_PER_EXERCISE} cartes ajoutées par exercice
-        </span>
+      <div>
+        {quota.exercisesRemaining} exercice{quota.exercisesRemaining === 1 ? "" : "s"} restant
+        {quota.exercisesRemaining === 1 ? "" : "s"} ce mois-ci
       </div>
     </button>
   );
@@ -62,7 +57,7 @@ export function AppShell({ quota, children }: { quota: Quota; children: React.Re
   return (
     <div className="relative flex h-screen overflow-hidden bg-paper">
       {open && (
-        <div className="flex h-screen w-80 flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
+        <div className="flex h-screen w-60 flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
           <div className="flex items-center justify-between">
             <Logo />
             <button

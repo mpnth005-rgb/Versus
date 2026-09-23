@@ -104,18 +104,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-@keyframes quota-a {
-  0%, 42% { opacity: 1; transform: translateY(0); }
-  50%, 92% { opacity: 0; transform: translateY(-7px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes quota-b {
-  0%, 42% { opacity: 0; transform: translateY(7px); }
-  50%, 92% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(7px); }
-}
-
 @keyframes progress-fill {
   0% { width: 6%; }
   50% { width: 78%; }
@@ -140,8 +128,6 @@ body {
   100% { opacity: 0; }
 }
 
-.animate-quota-a { animation: quota-a 7s ease-in-out infinite; }
-.animate-quota-b { animation: quota-b 7s ease-in-out infinite; }
 .animate-progress-fill { animation: progress-fill 3.6s ease-in-out infinite; }
 .animate-load-a { animation: load-a 5.4s ease-in-out infinite; }
 .animate-load-b { animation: load-b 5.4s ease-in-out infinite; }
