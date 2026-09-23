@@ -62,7 +62,7 @@ export function AppShell({ quota, children }: { quota: Quota; children: React.Re
   return (
     <div className="relative flex h-screen overflow-hidden bg-paper">
       {open && (
-        <div className="flex h-screen w-64 flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
+        <div className="flex h-screen w-72 flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
           <div className="flex items-center justify-between">
             <Logo />
             <button
