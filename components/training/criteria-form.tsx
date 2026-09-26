@@ -45,6 +45,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
       router.push(`/training/${data.id}`);
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Une erreur est survenue.");
       setPending(false);
