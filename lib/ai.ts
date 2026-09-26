@@ -118,11 +118,40 @@ const LEVEL_WRITING_GUIDANCE: Record<string, string> = {
   C1: "syntaxe complexe, lexique précis, registre soutenu possible, sous-entendus",
 };
 
+// Real per-call variety: `temperature`/`top_p`/`top_k` are all deprecated
+// for this model (see completeWithTool above), so there is no sampling
+// randomness left on the API side. Asking the model to "vary itself" with
+// an identical prompt each time produced near-duplicate texts under
+// near-deterministic decoding. Instead we pick a genuinely different
+// constraint server-side (Math.random(), not the model) for every call,
+// so the actual prompt text — not just an instruction — differs each time.
+const NARRATIVE_ANGLES = [
+  "Commence par un dialogue direct entre deux personnages, sans phrase d'introduction.",
+  "Ouvre sur une description sensorielle précise (un son, une odeur, une texture) avant d'introduire l'action.",
+  "Structure le texte autour d'un objet ou détail concret qui revient à la fin.",
+  "Adopte une focalisation interne : raconte depuis les pensées d'un seul personnage ou d'une seule voix.",
+  "Introduis un basculement net à mi-texte (changement de ton, de rythme ou de situation).",
+  "Construis le texte comme une succession de courtes observations juxtaposées plutôt qu'un récit linéaire.",
+  "Termine sur une chute ou une question ouverte plutôt que sur une conclusion fermée.",
+  "Commence in medias res, en plein milieu d'une action déjà engagée.",
+  "Construis autour d'une comparaison ou d'une image qui traverse tout le texte.",
+  "Adopte un ton légèrement ironique ou distancié sur la situation décrite.",
+  "Alterne deux courts paragraphes contrastés (par exemple avant/après, ou deux points de vue).",
+  "Ancre le texte dans un lieu précis décrit avec des détails concrets dès la première phrase.",
+];
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
 async function generateExerciseTextOnce(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
 }): Promise<GeneratedExercise> {
+  const angle = pickRandom(NARRATIVE_ANGLES);
+  const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
+
   const prompt = `Tu es un générateur de textes pour une plateforme d'entraînement à la traduction FR → EN nommée Versus.
 
 Tu reçois trois critères choisis par l'utilisateur : un type de texte, un niveau de langue (échelle CECRL), et une liste de thèmes.
@@ -131,11 +160,12 @@ Tu reçois trois critères choisis par l'utilisateur : un type de texte, un nive
 - Thèmes : ${params.themes.length > 0 ? params.themes.join(", ") : "un thème de ton choix"}
 
 Génère un texte ORIGINAL en français répondant à ces critères :
-- Longueur strictement comprise entre 130 et 170 mots.
+- Longueur cible : environ ${targetWordCount} mots (strictement entre 130 et 170 dans tous les cas).
 - Adapte le lexique, la longueur des phrases et la complexité syntaxique au niveau CECRL demandé.
 - Intègre organiquement les thèmes demandés sans les lister artificiellement.
 - Ne nomme AUCUNE personne réelle, ne fais référence à AUCUN événement d'actualité réel vérifiable, n'utilise AUCUN personnage ou œuvre sous droit d'auteur.
-- Fais varier à chaque génération, même à critères identiques : l'angle narratif, la structure, le registre exact dans la fourchette du niveau, et la longueur précise dans la plage 130-170. Ne réutilise jamais un titre, un nom de personnage ou une accroche déjà vus. Choisis toi-même cette variation ; elle n'est jamais visible par l'utilisateur.
+- Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) : ${angle}
+- Ne réutilise jamais un titre, un nom de personnage ou une accroche déjà vus.
 - Le texte doit constituer un exercice de traduction intéressant : varie les temps verbaux, inclus au moins une expression idiomatique ou tournure non triviale adaptée au niveau, évite les phrases trop plates.
 
 Appelle l'outil submit_exercise avec le résultat.`;
