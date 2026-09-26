@@ -144,6 +144,88 @@ function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+// Same rationale as NARRATIVE_ANGLES: pushes generation away from the one
+// "default" association a broad theme collapses to under near-deterministic
+// decoding (e.g. "Culture" + littéraire always landing on a library scene).
+// Only one selected theme gets a specific subtopic (see spotlightIndex in
+// generateExerciseTextOnce) — giving every theme its own subtopic when
+// several are selected at once (up to MAX_THEMES) risked forcing
+// incoherent combinations like "physique quantique + laïcité + musique".
+const THEME_SUBTOPICS: Record<string, string[]> = {
+  Science: [
+    "Astronomie et espace",
+    "Physique quantique",
+    "Biologie et génétique",
+    "Médecine et santé",
+    "Neurosciences",
+    "Intelligence artificielle",
+    "Chimie et matériaux",
+    "Paléontologie et archéologie",
+    "Mathématiques",
+    "Océanographie",
+  ],
+  Environnement: [
+    "Changement climatique",
+    "Biodiversité et espèces menacées",
+    "Énergies renouvelables",
+    "Pollution de l'air",
+    "Gestion de l'eau",
+    "Déforestation",
+    "Océans et pollution plastique",
+    "Agriculture durable",
+    "Recyclage et économie circulaire",
+    "Catastrophes naturelles",
+  ],
+  Politique: [
+    "Élections et systèmes électoraux",
+    "Relations internationales",
+    "Union européenne",
+    "Droits de l'homme",
+    "Politique intérieure française",
+    "Conflits et géopolitique",
+    "Institutions et Constitution",
+    "Partis et mouvements politiques",
+    "Politiques migratoires",
+    "Défense et sécurité",
+  ],
+  Économie: [
+    "Inflation et pouvoir d'achat",
+    "Marchés financiers et Bourse",
+    "Emploi et chômage",
+    "Commerce international",
+    "Cryptomonnaies et finance numérique",
+    "Entrepreneuriat et startups",
+    "Fiscalité et impôts",
+    "Immobilier et logement",
+    "Banques centrales et politique monétaire",
+    "Inégalités et répartition des richesses",
+  ],
+  Société: [
+    "Éducation et école",
+    "Santé publique",
+    "Égalité femmes-hommes",
+    "Famille et parentalité",
+    "Jeunesse et génération Z",
+    "Réseaux sociaux et numérique",
+    "Travail et télétravail",
+    "Religion et laïcité",
+    "Vieillissement de la population",
+    "Justice et criminalité",
+  ],
+  Culture: [
+    "Cinéma et séries",
+    "Littérature et édition",
+    "Musique",
+    "Arts plastiques et expositions",
+    "Théâtre et spectacle vivant",
+    "Patrimoine et monuments",
+    "Jeux vidéo",
+    "Mode et design",
+    "Gastronomie",
+    "Photographie",
+  ],
+};
+
 async function generateExerciseTextOnce(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
@@ -152,12 +234,24 @@ async function generateExerciseTextOnce(params: {
   const angle = pickRandom(NARRATIVE_ANGLES);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
 
+  const spotlightIndex =
+    params.themes.length > 0 ? Math.floor(Math.random() * params.themes.length) : -1;
+  const themeAngles = params.themes
+    .map((theme, i) => {
+      const subtopics = THEME_SUBTOPICS[theme];
+      return subtopics && i === spotlightIndex
+        ? `${theme} (angle : ${pickRandom(subtopics)})`
+        : theme;
+    })
+    .join(", ");
+
   const prompt = `Tu es un générateur de textes pour une plateforme d'entraînement à la traduction FR → EN nommée Versus.
 
 Tu reçois trois critères choisis par l'utilisateur : un type de texte, un niveau de langue (échelle CECRL), et une liste de thèmes.
 - Type de texte : ${TEXT_TYPE_PROMPTS[params.textType]}
 - Niveau CECRL : ${params.level} (${LEVEL_WRITING_GUIDANCE[params.level]})
-- Thèmes : ${params.themes.length > 0 ? params.themes.join(", ") : "un thème de ton choix"}
+- Thèmes : ${params.themes.length > 0 ? themeAngles : "un thème de ton choix"}
+- Si plusieurs thèmes sont demandés, intègre-les de façon naturelle et crédible ; s'ils sont difficiles à combiner, privilégie le thème principal et ne garde les autres qu'en toile de fond plutôt que de forcer un mélange artificiel.
 
 Génère un texte ORIGINAL en français répondant à ces critères :
 - Longueur cible : environ ${targetWordCount} mots (strictement entre 130 et 170 dans tous les cas).
