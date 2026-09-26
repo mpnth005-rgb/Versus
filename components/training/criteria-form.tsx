@@ -1,35 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
-import { TEXT_TYPE_LABELS, LEVEL_LABELS, THEME_OPTIONS, MAX_THEMES } from "@/lib/constants";
+import {
+  TEXT_TYPE_LABELS,
+  LEVEL_LABELS,
+  THEME_OPTIONS,
+  MAX_THEMES,
+  THEME_SUBTOPICS,
+} from "@/lib/constants";
 
 const TEXT_TYPES = ["LITERARY", "JOURNALISTIC", "DAILY"] as const;
 const LEVELS = ["A2", "B1", "B2", "C1"] as const;
+
+type Subtheme = { theme: string; label: string };
 
 export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }) {
   const router = useRouter();
   const [textType, setTextType] = useState<(typeof TEXT_TYPES)[number] | null>(null);
   const [level, setLevel] = useState<(typeof LEVELS)[number] | null>(null);
   const [themes, setThemes] = useState<string[]>([]);
+  const [subtheme, setSubtheme] = useState<Subtheme | null>(null);
+  const [subFocus, setSubFocus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const subRowRef = useRef<HTMLDivElement>(null);
 
   if (pending) return <LoadingScreen variant="generate" />;
 
   const isValid = textType !== null && level !== null && themes.length > 0;
   const disabled = !isValid || !canStartExercise;
+  const focusedTheme = subFocus && themes.includes(subFocus) ? subFocus : (themes[0] ?? null);
 
+  // Mirrors the design prototype's theme-toggle logic exactly: only one
+  // subtheme may be chosen at a time across all selected themes (not one
+  // per theme). Deselecting the theme that "owns" the current subtheme
+  // clears it; selecting a new theme with none focused yet focuses it.
   function toggleTheme(theme: string) {
-    setThemes((prev) =>
-      prev.includes(theme)
-        ? prev.filter((t) => t !== theme)
-        : prev.length < MAX_THEMES
-          ? [...prev, theme]
-          : prev
-    );
+    const on = themes.includes(theme);
+    if (!on && themes.length >= MAX_THEMES) return;
+
+    const nextThemes = on ? themes.filter((t) => t !== theme) : [...themes, theme];
+    const nextSubtheme = subtheme && nextThemes.includes(subtheme.theme) ? subtheme : null;
+    const wantedFocus = on
+      ? subFocus === theme
+        ? (nextSubtheme ? nextSubtheme.theme : (nextThemes[0] ?? null))
+        : subFocus
+      : (subFocus ?? theme);
+
+    setThemes(nextThemes);
+    setSubtheme(nextSubtheme);
+    setSubFocus(wantedFocus && nextThemes.includes(wantedFocus) ? wantedFocus : (nextThemes[0] ?? null));
+  }
+
+  function toggleSubtheme(theme: string, label: string) {
+    setSubtheme((prev) => (prev && prev.theme === theme && prev.label === label ? null : { theme, label }));
+  }
+
+  function scrollSubRow(dir: 1 | -1) {
+    subRowRef.current?.scrollBy({ left: dir * 200, behavior: "smooth" });
   }
 
   async function handleSubmit() {
@@ -40,7 +71,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
       const res = await fetch("/api/exercises", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ textType, level, themes }),
+        body: JSON.stringify({ textType, level, themes, subtheme }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
@@ -136,6 +167,97 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           })}
         </div>
       </div>
+
+      {themes.length > 0 && focusedTheme && (
+        <div className="mt-7 flex flex-col gap-3.5 border-t border-border pt-7">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-sm font-semibold text-ink-softer">
+              Sous-thème <span className="font-normal text-muted-light">(optionnel)</span>
+            </div>
+            <div className="flex items-center gap-3.5">
+              <button
+                type="button"
+                onClick={() => scrollSubRow(-1)}
+                className="cursor-pointer px-1 text-[13px] text-ink-40"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollSubRow(1)}
+                className="cursor-pointer px-1 text-[13px] text-ink-40"
+              >
+                ›
+              </button>
+              {subtheme && (
+                <button
+                  type="button"
+                  title="Aucun sous-thème"
+                  onClick={() => setSubtheme(null)}
+                  className="cursor-pointer text-[13px] text-muted-light"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {themes.length > 1 && (
+            <div className="flex gap-1.5">
+              {themes.map((theme) => (
+                <button
+                  key={theme}
+                  type="button"
+                  onClick={() => setSubFocus(theme)}
+                  className={
+                    "flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] " +
+                    (theme === focusedTheme
+                      ? "bg-paper-alt-2 font-semibold text-ink-softer"
+                      : "font-medium text-muted-light")
+                  }
+                >
+                  {theme}
+                  {subtheme?.theme === theme && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            ref={subRowRef}
+            className="flex gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {(THEME_SUBTOPICS[focusedTheme] ?? []).map((label) => {
+              const selected = subtheme?.theme === focusedTheme && subtheme?.label === label;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => toggleSubtheme(focusedTheme, label)}
+                  className={
+                    "flex-shrink-0 cursor-pointer whitespace-nowrap rounded-full px-3.5 py-[7px] text-[13px] font-medium " +
+                    (selected
+                      ? "bg-accent text-white"
+                      : "border border-border-strong bg-white text-ink-40")
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {!subtheme && (
+            <div className="text-[12.5px] text-muted-light">
+              {themes.length > 1
+                ? "Vous pouvez préciser un seul de vos thèmes. Sans sous-thème, le texte restera général."
+                : "Sans sous-thème, le texte restera général."}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 flex items-center gap-5">
         <button

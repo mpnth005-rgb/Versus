@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { countWords } from "@/lib/text";
 import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
+import { THEME_SUBTOPICS } from "@/lib/constants";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -179,97 +180,35 @@ function pickRandom<T>(items: T[]): T {
 // generateExerciseTextOnce) — giving every theme its own subtopic when
 // several are selected at once (up to MAX_THEMES) risked forcing
 // incoherent combinations like "physique quantique + laïcité + musique".
-const THEME_SUBTOPICS: Record<string, string[]> = {
-  Science: [
-    "Astronomie et espace",
-    "Physique quantique",
-    "Biologie et génétique",
-    "Médecine et santé",
-    "Neurosciences",
-    "Intelligence artificielle",
-    "Chimie et matériaux",
-    "Paléontologie et archéologie",
-    "Mathématiques",
-    "Océanographie",
-  ],
-  Environnement: [
-    "Changement climatique",
-    "Biodiversité et espèces menacées",
-    "Énergies renouvelables",
-    "Pollution de l'air",
-    "Gestion de l'eau",
-    "Déforestation",
-    "Océans et pollution plastique",
-    "Agriculture durable",
-    "Recyclage et économie circulaire",
-    "Catastrophes naturelles",
-  ],
-  Politique: [
-    "Élections et systèmes électoraux",
-    "Relations internationales",
-    "Union européenne",
-    "Droits de l'homme",
-    "Politique intérieure française",
-    "Conflits et géopolitique",
-    "Institutions et Constitution",
-    "Partis et mouvements politiques",
-    "Politiques migratoires",
-    "Défense et sécurité",
-  ],
-  Économie: [
-    "Inflation et pouvoir d'achat",
-    "Marchés financiers et Bourse",
-    "Emploi et chômage",
-    "Commerce international",
-    "Cryptomonnaies et finance numérique",
-    "Entrepreneuriat et startups",
-    "Fiscalité et impôts",
-    "Immobilier et logement",
-    "Banques centrales et politique monétaire",
-    "Inégalités et répartition des richesses",
-  ],
-  Société: [
-    "Éducation et école",
-    "Santé publique",
-    "Égalité femmes-hommes",
-    "Famille et parentalité",
-    "Jeunesse et génération Z",
-    "Réseaux sociaux et numérique",
-    "Travail et télétravail",
-    "Religion et laïcité",
-    "Vieillissement de la population",
-    "Justice et criminalité",
-  ],
-  Culture: [
-    "Cinéma et séries",
-    "Littérature et édition",
-    "Musique",
-    "Arts plastiques et expositions",
-    "Théâtre et spectacle vivant",
-    "Patrimoine et monuments",
-    "Jeux vidéo",
-    "Mode et design",
-    "Gastronomie",
-    "Photographie",
-  ],
-};
+// The list itself lives in lib/constants.ts, shared with the sub-theme
+// picker in criteria-form.tsx, so the user can explicitly pick the angle
+// for one theme instead of leaving it to Math.random().
 
 async function generateExerciseTextOnce(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
+  subtheme?: { theme: string; label: string } | null;
 }): Promise<GeneratedExercise> {
   const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
 
-  const spotlightIndex =
-    params.themes.length > 0 ? Math.floor(Math.random() * params.themes.length) : -1;
+  // A user-picked subtheme (from the criteria form's sub-theme selector)
+  // always wins over the random spotlight — it targets whichever theme the
+  // user chose it for, not necessarily the first one in the array.
+  const explicitSubtheme =
+    params.subtheme && params.themes.includes(params.subtheme.theme) ? params.subtheme : null;
+  const spotlightIndex = explicitSubtheme
+    ? params.themes.indexOf(explicitSubtheme.theme)
+    : params.themes.length > 0
+      ? Math.floor(Math.random() * params.themes.length)
+      : -1;
   const themeAngles = params.themes
     .map((theme, i) => {
+      if (i !== spotlightIndex) return theme;
+      if (explicitSubtheme) return `${theme} (angle : ${explicitSubtheme.label})`;
       const subtopics = THEME_SUBTOPICS[theme];
-      return subtopics && i === spotlightIndex
-        ? `${theme} (angle : ${pickRandom(subtopics)})`
-        : theme;
+      return subtopics ? `${theme} (angle : ${pickRandom(subtopics)})` : theme;
     })
     .join(", ");
 
@@ -302,6 +241,7 @@ export async function generateExerciseText(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
+  subtheme?: { theme: string; label: string } | null;
 }): Promise<GeneratedExercise> {
   const MAX_ATTEMPTS = 3;
   let last: GeneratedExercise | null = null;

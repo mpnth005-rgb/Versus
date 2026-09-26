@@ -26,6 +26,84 @@ export const THEME_OPTIONS = [
 
 export const MAX_THEMES = 3;
 
+// Shared between the sub-theme picker (criteria-form.tsx) and the exercise
+// generation prompt (lib/ai.ts) — one source of truth so the UI only ever
+// offers subthemes the server actually knows how to use.
+export const THEME_SUBTOPICS: Record<string, string[]> = {
+  Science: [
+    "Astronomie et espace",
+    "Physique quantique",
+    "Biologie et génétique",
+    "Médecine et santé",
+    "Neurosciences",
+    "Intelligence artificielle",
+    "Chimie et matériaux",
+    "Paléontologie et archéologie",
+    "Mathématiques",
+    "Océanographie",
+  ],
+  Environnement: [
+    "Changement climatique",
+    "Biodiversité et espèces menacées",
+    "Énergies renouvelables",
+    "Pollution de l'air",
+    "Gestion de l'eau",
+    "Déforestation",
+    "Océans et pollution plastique",
+    "Agriculture durable",
+    "Recyclage et économie circulaire",
+    "Catastrophes naturelles",
+  ],
+  Politique: [
+    "Élections et systèmes électoraux",
+    "Relations internationales",
+    "Union européenne",
+    "Droits de l'homme",
+    "Politique intérieure française",
+    "Conflits et géopolitique",
+    "Institutions et Constitution",
+    "Partis et mouvements politiques",
+    "Politiques migratoires",
+    "Défense et sécurité",
+  ],
+  Économie: [
+    "Inflation et pouvoir d'achat",
+    "Marchés financiers et Bourse",
+    "Emploi et chômage",
+    "Commerce international",
+    "Cryptomonnaies et finance numérique",
+    "Entrepreneuriat et startups",
+    "Fiscalité et impôts",
+    "Immobilier et logement",
+    "Banques centrales et politique monétaire",
+    "Inégalités et répartition des richesses",
+  ],
+  Société: [
+    "Éducation et école",
+    "Santé publique",
+    "Égalité femmes-hommes",
+    "Famille et parentalité",
+    "Jeunesse et génération Z",
+    "Réseaux sociaux et numérique",
+    "Travail et télétravail",
+    "Religion et laïcité",
+    "Vieillissement de la population",
+    "Justice et criminalité",
+  ],
+  Culture: [
+    "Cinéma et séries",
+    "Littérature et édition",
+    "Musique",
+    "Arts plastiques et expositions",
+    "Théâtre et spectacle vivant",
+    "Patrimoine et monuments",
+    "Jeux vidéo",
+    "Mode et design",
+    "Gastronomie",
+    "Photographie",
+  ],
+};
+
 export const NAV_ITEMS = [
   { href: "/training", label: "Entraînement" },
   { href: "/deck", label: "Deck de révision" },
