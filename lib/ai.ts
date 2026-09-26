@@ -125,20 +125,48 @@ const LEVEL_WRITING_GUIDANCE: Record<string, string> = {
 // near-deterministic decoding. Instead we pick a genuinely different
 // constraint server-side (Math.random(), not the model) for every call,
 // so the actual prompt text — not just an instruction — differs each time.
-const NARRATIVE_ANGLES = [
-  "Commence par un dialogue direct entre deux personnages, sans phrase d'introduction.",
-  "Ouvre sur une description sensorielle précise (un son, une odeur, une texture) avant d'introduire l'action.",
-  "Structure le texte autour d'un objet ou détail concret qui revient à la fin.",
-  "Adopte une focalisation interne : raconte depuis les pensées d'un seul personnage ou d'une seule voix.",
-  "Introduis un basculement net à mi-texte (changement de ton, de rythme ou de situation).",
-  "Construis le texte comme une succession de courtes observations juxtaposées plutôt qu'un récit linéaire.",
-  "Termine sur une chute ou une question ouverte plutôt que sur une conclusion fermée.",
-  "Commence in medias res, en plein milieu d'une action déjà engagée.",
-  "Construis autour d'une comparaison ou d'une image qui traverse tout le texte.",
-  "Adopte un ton légèrement ironique ou distancié sur la situation décrite.",
-  "Alterne deux courts paragraphes contrastés (par exemple avant/après, ou deux points de vue).",
-  "Ancre le texte dans un lieu précis décrit avec des détails concrets dès la première phrase.",
-];
+// Split by textType rather than one shared list: several angles are
+// flatly incompatible with a given type (e.g. internal-POV/first-person
+// narration or an ironic tone contradict JOURNALISTIC's required
+// "ton neutre, factuel" — see TEXT_TYPE_PROMPTS above).
+const NARRATIVE_ANGLES: Record<"LITERARY" | "JOURNALISTIC" | "DAILY", string[]> = {
+  LITERARY: [
+    "Commence par un dialogue direct entre deux personnages, sans phrase d'introduction.",
+    "Ouvre sur une description sensorielle précise (un son, une odeur, une texture) avant d'introduire l'action.",
+    "Structure le texte autour d'un objet ou détail concret qui revient à la fin.",
+    "Adopte une focalisation interne : raconte depuis les pensées d'un seul personnage ou d'une seule voix.",
+    "Introduis un basculement net à mi-texte (changement de ton, de rythme ou de situation).",
+    "Termine sur une chute ou une question ouverte plutôt que sur une conclusion fermée.",
+    "Construis autour d'une comparaison ou d'une image qui traverse tout le texte.",
+    "Adopte un ton légèrement ironique ou distancié sur la situation décrite.",
+    "Alterne deux courts paragraphes contrastés (par exemple avant/après, ou deux points de vue).",
+    "Ancre le texte dans un lieu précis décrit avec des détails concrets dès la première phrase.",
+  ],
+  JOURNALISTIC: [
+    "Ouvre par la réponse immédiate aux questions clés (qui, quoi, où) avant d'en détailler le contexte — technique de la pyramide inversée.",
+    "Commence par une citation courte attribuée à une source générique (\"un responsable\", \"un expert du secteur\"), sans qu'elle soit réelle.",
+    "Ouvre sur un chiffre ou une statistique marquante, puis explique son contexte.",
+    "Présente d'abord la situation actuelle, puis son évolution récente.",
+    "Construis autour d'un contraste factuel entre deux points de vue ou deux groupes concernés.",
+    "Adopte une structure chronologique claire : les faits sont présentés dans l'ordre où ils se sont déroulés.",
+    "Ouvre sur une scène de terrain brève et factuelle (un lieu, un moment précis) avant d'élargir au sujet général.",
+    "Termine sur une implication concrète ou une question qui reste en suspens pour le lecteur.",
+    "Structure le texte autour de trois éléments factuels distincts, présentés successivement.",
+    "Introduis un chiffre ou une donnée qui contredit une idée reçue sur le sujet.",
+  ],
+  DAILY: [
+    "Commence par un détail très concret et banal du quotidien (un objet, une habitude, un moment précis de la journée).",
+    "Ouvre sur un dialogue informel entre deux proches (famille, amis, collègues).",
+    "Raconte une petite routine interrompue par un imprévu mineur.",
+    "Structure le texte autour d'une liste de petites tâches ou d'étapes du quotidien.",
+    "Adresse-toi directement au lecteur (\"tu\") comme dans un conseil ou une anecdote partagée.",
+    "Compare une habitude d'aujourd'hui à celle d'avant (une évolution personnelle ou générationnelle).",
+    "Raconte un petit incident ordinaire (une file d'attente, un retard, un objet perdu) avec un ton léger.",
+    "Termine sur une réflexion pratique ou un constat simple plutôt qu'une morale appuyée.",
+    "Structure le texte comme un court récit d'une journée type, du matin au soir.",
+    "Ouvre sur une remarque ou une question que quelqu'un pose dans une situation banale.",
+  ],
+};
 
 function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
@@ -231,7 +259,7 @@ async function generateExerciseTextOnce(params: {
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
 }): Promise<GeneratedExercise> {
-  const angle = pickRandom(NARRATIVE_ANGLES);
+  const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
 
   const spotlightIndex =
