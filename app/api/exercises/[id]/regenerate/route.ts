@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
+import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
 
 export async function POST(
   _req: Request,
@@ -17,6 +18,14 @@ export async function POST(
   const exercise = await prisma.exercise.findUnique({ where: { id } });
   if (!exercise || exercise.userId !== session.user.id) {
     return NextResponse.json({ error: "Exercice introuvable." }, { status: 404 });
+  }
+
+  const quota = await getUserQuota(session.user.id);
+  if (!quota.canStartExercise) {
+    return NextResponse.json(
+      { error: "Limite mensuelle d'exercices atteinte." },
+      { status: 403 }
+    );
   }
 
   try {
@@ -39,6 +48,7 @@ export async function POST(
         },
       }),
     ]);
+    await consumeExerciseQuota(session.user.id);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
