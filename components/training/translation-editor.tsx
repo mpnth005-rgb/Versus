@@ -12,6 +12,7 @@ export type EditorExercise = {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
+  subtheme: { theme: string; label: string } | null;
   sourceText: string;
   wordCount: number;
 };
@@ -33,6 +34,16 @@ export function TranslationEditor({ exercise: initial }: { exercise: EditorExerc
   const translationWords = wordCount(translation);
   const canSubmit = translation.trim().length > 0 && translationWords >= exercise.wordCount * 0.5;
 
+  // The theme carrying the chosen subtheme is shown first, as "Theme
+  // (Subtheme)"; the others follow plain.
+  const themesLabel = (
+    exercise.subtheme
+      ? [exercise.subtheme.theme, ...exercise.themes.filter((t) => t !== exercise.subtheme!.theme)]
+      : exercise.themes
+  )
+    .map((t) => (exercise.subtheme?.theme === t ? `${t} (${exercise.subtheme.label})` : t))
+    .join(" · ");
+
   async function regenerate() {
     setError(null);
     setRegenerating(true);
@@ -51,6 +62,7 @@ export function TranslationEditor({ exercise: initial }: { exercise: EditorExerc
           textType: refreshed.textType,
           level: refreshed.level,
           themes: refreshed.themes,
+          subtheme: refreshed.subtheme,
           sourceText: refreshed.sourceText,
           wordCount: refreshed.wordCount,
         });
@@ -96,7 +108,7 @@ export function TranslationEditor({ exercise: initial }: { exercise: EditorExerc
           </span>
           {exercise.themes.length > 0 && (
             <span className="rounded-full bg-paper-alt-2 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-40">
-              {exercise.themes.join(" · ")}
+              {themesLabel}
             </span>
           )}
         </div>

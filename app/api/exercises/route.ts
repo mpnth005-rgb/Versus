@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
 import { MAX_THEMES, THEME_OPTIONS, THEME_SUBTOPICS } from "@/lib/constants";
@@ -55,6 +56,9 @@ export async function POST(req: NextRequest) {
         textType: parsed.data.textType,
         level: parsed.data.level,
         themes: parsed.data.themes,
+        // Nullable Json columns need Prisma.DbNull, not a plain `null`,
+        // to actually store SQL NULL rather than a JSON "null" literal.
+        subtheme: subtheme ?? Prisma.DbNull,
         sourceText: generated.sourceText,
         wordCount: generated.wordCount,
         status: "READY",

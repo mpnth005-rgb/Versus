@@ -169,6 +169,11 @@ model Exercise {
   textType   TextType
   level      Level
   themes     Json // string[] e.g. ["Science", "Environnement"]
+  // { theme: string; label: string } | null — the one subtheme the user
+  // picked in the criteria form (see lib/constants.ts THEME_SUBTOPICS).
+  // Persisted so regenerating the text re-applies the same angle instead
+  // of re-rolling a random one.
+  subtheme   Json?
   sourceText String
   wordCount  Int
   status     ExerciseStatus @default(GENERATING)
