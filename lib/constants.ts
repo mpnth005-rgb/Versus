@@ -24,7 +24,7 @@ export const THEME_OPTIONS = [
   "Culture",
 ] as const;
 
-export const MAX_THEMES = 3;
+export const MAX_THEMES = 2;
 
 // Shared between the sub-theme picker (criteria-form.tsx) and the exercise
 // generation prompt (lib/ai.ts) — one source of truth so the UI only ever

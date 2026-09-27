@@ -146,7 +146,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             {themes.length}/{MAX_THEMES} sélectionnés
           </div>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {THEME_OPTIONS.map((theme) => {
             const selected = themes.includes(theme);
             return (
@@ -155,7 +155,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                 type="button"
                 onClick={() => toggleTheme(theme)}
                 className={
-                  "cursor-pointer rounded-full px-4 py-2 text-[13.5px] font-medium " +
+                  "flex-shrink-0 cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13.5px] font-medium " +
                   (selected
                     ? "bg-accent-light text-accent-ink"
                     : "border border-border-strong text-[oklch(0.45_0.01_90)]")
@@ -227,7 +227,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
 
           <div
             ref={subRowRef}
-            className="flex gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {(THEME_SUBTOPICS[focusedTheme] ?? []).map((label) => {
               const selected = subtheme?.theme === focusedTheme && subtheme?.label === label;
@@ -237,7 +237,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                   type="button"
                   onClick={() => toggleSubtheme(focusedTheme, label)}
                   className={
-                    "flex-shrink-0 cursor-pointer whitespace-nowrap rounded-full px-3.5 py-[7px] text-[13px] font-medium " +
+                    "flex-shrink-0 snap-start cursor-pointer whitespace-nowrap rounded-full px-3.5 py-[7px] text-[13px] font-medium " +
                     (selected
                       ? "bg-accent text-white"
                       : "border border-border-strong bg-white text-ink-40")
