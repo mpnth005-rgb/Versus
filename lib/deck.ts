@@ -114,5 +114,5 @@ export async function getReviewQueue(userId: string) {
     }),
   ]);
 
-  return { newCards, learningCards, reviewCards, dailyNewCardLimit };
+  return { newCards, learningCards, reviewCards, dailyNewCardLimit, introducedToday };
 }

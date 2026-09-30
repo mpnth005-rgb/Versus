@@ -6,10 +6,14 @@ import { useRouter } from "next/navigation";
 export function DailyLimitModal({
   open,
   initialValue,
+  introducedToday,
   onClose,
 }: {
   open: boolean;
   initialValue: number;
+  // New cards already started today count against the limit (Anki-style
+  // daily quota), so the modal shows how many are left at each value.
+  introducedToday: number;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -89,6 +93,15 @@ export function DailyLimitModal({
         <div className="flex justify-between text-[11.5px] text-muted-lighter">
           <span>0</span>
           <span>40</span>
+        </div>
+        <div className="rounded-lg bg-paper-alt px-4 py-3 text-[12.5px] leading-[1.55] text-muted-light">
+          <span className="font-semibold text-ink-softer">{introducedToday}</span> nouvelle
+          {introducedToday === 1 ? "" : "s"} carte{introducedToday === 1 ? "" : "s"} déjà
+          commencée{introducedToday === 1 ? "" : "s"} aujourd&apos;hui · encore{" "}
+          <span className="font-semibold text-ink-softer">
+            {Math.max(0, value - introducedToday)}
+          </span>{" "}
+          possible{Math.max(0, value - introducedToday) === 1 ? "" : "s"} avec cette limite
         </div>
         <div className="mt-2 flex gap-2.5">
           <button

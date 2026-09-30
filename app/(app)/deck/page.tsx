@@ -23,7 +23,7 @@ export default async function DeckPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [{ newCards, learningCards, reviewCards, dailyNewCardLimit }, srsConfig] =
+  const [{ newCards, learningCards, reviewCards, dailyNewCardLimit, introducedToday }, srsConfig] =
     await Promise.all([getReviewQueue(session.user.id), getSrsConfig(session.user.id)]);
 
   return (
@@ -35,6 +35,7 @@ export default async function DeckPage() {
       initialLearning={learningCards.map(toQueueCard)}
       initialReview={reviewCards.map(toQueueCard)}
       dailyNewCardLimit={dailyNewCardLimit}
+      introducedToday={introducedToday}
       srsConfig={srsConfig}
     />
   );

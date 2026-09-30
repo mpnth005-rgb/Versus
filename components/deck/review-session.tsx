@@ -95,10 +95,12 @@ function applyRating(s: SessionState, updated: QueueCard): SessionState {
 }
 
 function EmptyState({
+  introducedToday,
   message,
   dailyNewCardLimit,
 }: {
   message: string;
+  introducedToday: number;
   dailyNewCardLimit: number;
 }) {
   const [limitOpen, setLimitOpen] = useState(false);
@@ -131,6 +133,7 @@ function EmptyState({
       <DailyLimitModal
         open={limitOpen}
         initialValue={dailyNewCardLimit}
+        introducedToday={introducedToday}
         onClose={() => setLimitOpen(false)}
       />
     </div>
@@ -142,12 +145,16 @@ export function ReviewSession({
   initialLearning,
   initialReview,
   dailyNewCardLimit,
+  introducedToday: introducedBeforeSession,
   srsConfig,
 }: {
   initialNew: QueueCard[];
   initialLearning: QueueCard[];
   initialReview: QueueCard[];
   dailyNewCardLimit: number;
+  // New cards already started today when the page loaded — they count
+  // against the daily limit, which the limit modal spells out.
+  introducedToday: number;
   srsConfig: SrsConfig;
 }) {
   const [session, setSession] = useState(() =>
@@ -161,6 +168,10 @@ export function ReviewSession({
   const [error, setError] = useState<string | null>(null);
   const [limitOpen, setLimitOpen] = useState(false);
 
+  // Every new card rated in this session has left the "new" pool.
+  const introducedToday =
+    introducedBeforeSession + (session.newTotal - session.newCards.length);
+
   if (!session.current) {
     return (
       <EmptyState
@@ -168,6 +179,7 @@ export function ReviewSession({
           startedEmpty ? "Aucune carte à réviser aujourd'hui" : "Session terminée pour aujourd'hui"
         }
         dailyNewCardLimit={dailyNewCardLimit}
+        introducedToday={introducedToday}
       />
     );
   }
@@ -348,6 +360,7 @@ export function ReviewSession({
       <DailyLimitModal
         open={limitOpen}
         initialValue={dailyNewCardLimit}
+        introducedToday={introducedToday}
         onClose={() => setLimitOpen(false)}
       />
     </div>
