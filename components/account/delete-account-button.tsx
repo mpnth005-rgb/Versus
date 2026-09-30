@@ -10,13 +10,14 @@ export function DeleteAccountButton() {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
+  // Stays greyed out until the login page replaces this one.
   async function confirmDelete() {
     setPending(true);
     try {
       await fetch("/api/account", { method: "DELETE" });
       router.push("/login");
       router.refresh();
-    } finally {
+    } catch {
       setPending(false);
     }
   }

@@ -1,4 +1,6 @@
-const MESSAGES: Record<"generate" | "correct", string[]> = {
+type Variant = "generate" | "correct";
+
+const MESSAGES: Record<Variant, string[]> = {
   generate: ["Analyse de vos critères…", "Rédaction du texte…", "Finalisation…"],
   correct: [
     "Lecture de votre traduction…",
@@ -7,7 +9,7 @@ const MESSAGES: Record<"generate" | "correct", string[]> = {
   ],
 };
 
-export function LoadingScreen({ variant }: { variant: "generate" | "correct" }) {
+export function LoadingScreen({ variant }: { variant: Variant }) {
   const messages = MESSAGES[variant];
 
   return (

@@ -40,12 +40,14 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
   const sentence = data.flaggedSentences[index];
   const hasErrors = data.flaggedSentences.length > 0;
 
+  // The dialog stays open and greyed out until the completion page
+  // replaces this one; it only resets if the request fails.
   async function finishSession() {
     setFinishing(true);
     try {
       await fetch(`/api/exercises/${data.exerciseId}/complete`, { method: "POST" });
       router.push(`/training/${data.exerciseId}/complete`);
-    } finally {
+    } catch {
       setFinishing(false);
       setConfirmOpen(false);
     }

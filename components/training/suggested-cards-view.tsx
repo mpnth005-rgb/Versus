@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { LockIcon } from "@/components/lock-icon";
+import { UpsellModal } from "@/components/upsell-modal";
 import { ERROR_TYPE_LABELS, type ErrorType } from "@/lib/scoring";
 
 export type SuggestedCard = { front: string; back: string; category: ErrorType };
@@ -22,6 +24,7 @@ export function SuggestedCardsView({
   const [refreshingIndex, setRefreshingIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   function toggle(index: number) {
     setSelected((prev) => {
@@ -128,12 +131,22 @@ export function SuggestedCardsView({
                   >
                     <span className="text-sm">✓</span>Ajouté au deck
                   </button>
+                ) : selected.size >= maxCards ? (
+                  // Only reachable on the free plan (Versus Upper has no cap).
+                  <button
+                    type="button"
+                    onClick={() => setUpsellOpen(true)}
+                    title="Réservé à Versus Upper"
+                    className="flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-4.5 py-2.5 text-[13px] font-semibold text-muted-lighter"
+                  >
+                    <LockIcon />
+                    Ajouter au deck
+                  </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => toggle(index)}
-                    disabled={selected.size >= maxCards}
-                    className="cursor-pointer rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="cursor-pointer rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white"
                   >
                     Ajouter au deck
                   </button>
@@ -142,7 +155,7 @@ export function SuggestedCardsView({
                   type="button"
                   onClick={() => refresh(index)}
                   disabled={isRefreshing}
-                  className="ml-auto cursor-pointer text-[12.5px] font-medium text-muted-light disabled:opacity-60"
+                  className="ml-auto cursor-pointer text-[12.5px] font-medium text-muted-light"
                 >
                   {isRefreshing ? "Rafraîchissement…" : "Rafraîchir la phrase ↻"}
                 </button>
@@ -162,13 +175,14 @@ export function SuggestedCardsView({
           type="button"
           onClick={confirm}
           disabled={confirming}
-          className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white disabled:opacity-60"
+          className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
         >
-          {confirming ? "…" : "Confirmer l'ajout au deck"}
+          Confirmer l&apos;ajout au deck
         </button>
       </div>
 
       {error && <div className="text-[12.5px] text-danger-text">{error}</div>}
+      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
     </div>
   );
 }

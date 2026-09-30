@@ -45,7 +45,7 @@ export function ManageSubscription({
             type="button"
             onClick={openPortal}
             disabled={loading}
-            className="cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40 disabled:opacity-60"
+            className="cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
           >
             Gérer l&apos;abonnement
           </button>

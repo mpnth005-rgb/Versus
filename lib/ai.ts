@@ -266,12 +266,17 @@ const referenceSentenceSchema = z.object({
   phraseTraduite: z.string(),
 });
 
+// The model only returns the sentence-aligned translation. The full text
+// is rebuilt from it rather than requested as a second field: the model
+// would otherwise write the whole translation twice, and occasionally
+// skipped that redundant field, failing validation.
 const referenceTranslationSchema = z.object({
-  traductionComplete: z.string(),
   phrases: z.array(referenceSentenceSchema).min(1),
 });
 
-export type ReferenceTranslation = z.infer<typeof referenceTranslationSchema>;
+export type ReferenceTranslation = z.infer<typeof referenceTranslationSchema> & {
+  traductionComplete: string;
+};
 
 const generateReferenceTool: Tool = {
   name: "submit_reference_translation",
@@ -279,7 +284,6 @@ const generateReferenceTool: Tool = {
   input_schema: {
     type: "object",
     properties: {
-      traductionComplete: { type: "string", description: "Traduction anglaise complète, texte continu." },
       phrases: {
         type: "array",
         description: "Alignement phrase par phrase, même ordre et même nombre que le texte source.",
@@ -294,7 +298,7 @@ const generateReferenceTool: Tool = {
         },
       },
     },
-    required: ["traductionComplete", "phrases"],
+    required: ["phrases"],
   },
 };
 
@@ -319,7 +323,12 @@ Découpe ta traduction phrase par phrase, alignée sur le découpage en phrases 
 Appelle l'outil submit_reference_translation avec le résultat.`;
 
   const result = await completeWithTool(prompt, generateReferenceTool, 3000);
-  return referenceTranslationSchema.parse(result);
+  const { phrases } = referenceTranslationSchema.parse(result);
+  const ordered = [...phrases].sort((a, b) => a.numero - b.numero);
+  return {
+    phrases: ordered,
+    traductionComplete: ordered.map((p) => p.phraseTraduite.trim()).join(" "),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -468,7 +477,9 @@ Ensuite, propose entre 0 et 10 cartes de révision (0 si aucune erreur), chacune
 
 Appelle l'outil submit_classification avec le résultat.`;
 
-  const result = await completeWithTool(prompt, classifyTool, 4000);
+  // A translation with errors in most sentences (each echoed with its
+  // explanations) plus up to 10 cards overran 4000 tokens and got cut off.
+  const result = await completeWithTool(prompt, classifyTool, 10000);
   return classificationSchema.parse(result);
 }
 

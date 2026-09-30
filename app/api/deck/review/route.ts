@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
       easeFactor: card.easeFactor,
     },
     parsed.data.rating,
-    config
+    config,
+    { cardId: card.id, dueAt: card.dueAt }
   );
 
   await prisma.flashcard.update({
@@ -47,8 +48,20 @@ export async function POST(req: NextRequest) {
       intervalDays: schedule.intervalDays,
       easeFactor: schedule.easeFactor,
       dueAt,
+      // First rating of a new card counts against today's new-card quota.
+      ...(card.state === "NEW" ? { introducedAt: new Date() } : {}),
     },
   });
 
-  return NextResponse.json({ ok: true });
+  // The review session uses the new schedule to re-bucket the card and
+  // pick the next one without reloading.
+  return NextResponse.json({
+    card: {
+      state: schedule.state,
+      currentStep: schedule.currentStep,
+      intervalDays: schedule.intervalDays,
+      easeFactor: schedule.easeFactor,
+      dueAt: dueAt.toISOString(),
+    },
+  });
 }

@@ -246,6 +246,9 @@ model Flashcard {
   // Percentage, e.g. 250 == x2.5 (matches the spec's convention, not a
   // 0-1 decimal), floored at UserSettings.easeFactorFloor.
   easeFactor       Float     @default(250)
+  // When the card was first rated (left NEW). Counts it against the
+  // daily new-card quota for that study day (lib/deck.ts).
+  introducedAt     DateTime?
   sourceExerciseId String?
   createdAt        DateTime  @default(now())
 

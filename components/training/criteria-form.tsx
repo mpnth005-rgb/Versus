@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
+import { LockIcon } from "@/components/lock-icon";
+import { UpsellModal } from "@/components/upsell-modal";
 import {
   TEXT_TYPE_LABELS,
   LEVEL_LABELS,
@@ -26,6 +28,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   const [subFocus, setSubFocus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upsellOpen, setUpsellOpen] = useState(false);
   const subRowRef = useRef<HTMLDivElement>(null);
 
   if (pending) return <LoadingScreen variant="generate" />;
@@ -84,7 +87,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   }
 
   return (
-    <div className="flex flex-col gap-0 py-14 px-16 max-w-[640px]">
+    <div className="flex flex-col gap-0 py-14 px-16">
       <div className="mb-8">
         <div className="mb-2.5 text-[13px] font-semibold uppercase tracking-[0.02em] text-accent">
           Nouvel exercice
@@ -146,7 +149,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             {themes.length}/{MAX_THEMES} sélectionnés
           </div>
         </div>
-        <div className="flex gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-wrap gap-2.5">
           {THEME_OPTIONS.map((theme) => {
             const selected = themes.includes(theme);
             return (
@@ -155,7 +158,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                 type="button"
                 onClick={() => toggleTheme(theme)}
                 className={
-                  "flex-shrink-0 cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13.5px] font-medium " +
+                  "cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13.5px] font-medium " +
                   (selected
                     ? "bg-accent-light text-accent-ink"
                     : "border border-border-strong text-[oklch(0.45_0.01_90)]")
@@ -260,19 +263,31 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
       )}
 
       <div className="mt-8 flex items-center gap-5">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={handleSubmit}
-          className={
-            "rounded-lg px-7 py-3.5 text-[15px] font-semibold " +
-            (disabled
-              ? "cursor-not-allowed bg-paper-alt-3 text-muted-ghost"
-              : "cursor-pointer bg-ink text-white")
-          }
-        >
-          Générer le texte
-        </button>
+        {canStartExercise ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={handleSubmit}
+            className={
+              "rounded-lg px-7 py-3.5 text-[15px] font-semibold " +
+              (disabled
+                ? "cursor-not-allowed bg-paper-alt-3 text-muted-ghost"
+                : "cursor-pointer bg-ink text-white")
+            }
+          >
+            Générer le texte
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setUpsellOpen(true)}
+            title="Réservé à Versus Upper"
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-7 py-3.5 text-[15px] font-semibold text-muted-lighter"
+          >
+            <LockIcon size={13} />
+            Générer le texte
+          </button>
+        )}
         <div className="max-w-[280px] text-[12.5px] text-muted-light">
           Un nouveau texte de 130–170 mots sera généré selon vos critères.
         </div>
@@ -280,12 +295,11 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
 
       {!canStartExercise && (
         <div className="mt-4 text-[12.5px] text-danger-text">
-          Limite mensuelle d&apos;exercices atteinte. Passez à Versus Upper (voir le
-          panneau &laquo;&nbsp;Versus gratuit&nbsp;&raquo; dans la barre latérale) pour
-          continuer.
+          Limite mensuelle de textes atteinte.
         </div>
       )}
       {error && <div className="mt-4 text-[12.5px] text-danger-text">{error}</div>}
+      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
     </div>
   );
 }

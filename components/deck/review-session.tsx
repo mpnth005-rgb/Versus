@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { ratingPreviews, RATING_LABELS, type Rating, type CardState } from "@/lib/srs";
+import {
+  ratingPreviews,
+  RATING_LABELS,
+  type Rating,
+  type CardState,
+  type SrsConfig,
+} from "@/lib/srs";
 import { DailyLimitModal } from "@/components/deck/daily-limit-modal";
 
 export type QueueCard = {
@@ -14,9 +20,79 @@ export type QueueCard = {
   currentStep: number;
   intervalDays: number;
   easeFactor: number;
+  dueAt: string;
 };
 
 const RATINGS: Rating[] = ["AGAIN", "HARD", "GOOD", "EASY"];
+
+type SessionState = {
+  newCards: QueueCard[];
+  learning: QueueCard[];
+  review: QueueCard[];
+  // Pool sizes at session start, used to spread new cards evenly among
+  // reviews (Anki's default "mix with reviews" order).
+  newTotal: number;
+  reviewTotal: number;
+  current: QueueCard | null;
+};
+
+/**
+ * Anki-style choice of the next card:
+ * 1. a learning card whose delay has elapsed (earliest first);
+ * 2. otherwise a new or review card, new ones interleaved evenly;
+ * 3. otherwise the learning card due soonest, shown ahead of its delay —
+ *    so the session never makes you wait.
+ */
+function pickNext(s: Omit<SessionState, "current">): SessionState["current"] {
+  const now = Date.now();
+  const learningByDue = [...s.learning].sort(
+    (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()
+  );
+
+  const dueLearning = learningByDue[0];
+  if (dueLearning && new Date(dueLearning.dueAt).getTime() <= now) {
+    return dueLearning;
+  }
+
+  if (s.newCards.length > 0 || s.review.length > 0) {
+    const newLeft = s.newTotal > 0 ? s.newCards.length / s.newTotal : 0;
+    const reviewLeft = s.reviewTotal > 0 ? s.review.length / s.reviewTotal : 0;
+    const takeNew = s.review.length === 0 || (s.newCards.length > 0 && newLeft > reviewLeft);
+    return takeNew ? s.newCards[0] : s.review[0];
+  }
+
+  return dueLearning ?? null;
+}
+
+function startSession(
+  newCards: QueueCard[],
+  learning: QueueCard[],
+  review: QueueCard[]
+): SessionState {
+  const pools = {
+    newCards,
+    learning,
+    review,
+    newTotal: newCards.length,
+    reviewTotal: review.length,
+  };
+  return { ...pools, current: pickNext(pools) };
+}
+
+/** Moves the rated card out of its bucket; it stays in the session only if
+ * it's still on a minute-based step ladder (learning/relearning). */
+function applyRating(s: SessionState, updated: QueueCard): SessionState {
+  const without = (cards: QueueCard[]) => cards.filter((c) => c.id !== updated.id);
+  const stillLearning = updated.state === "LEARNING" || updated.state === "RELEARNING";
+  const pools = {
+    newCards: without(s.newCards),
+    review: without(s.review),
+    learning: stillLearning ? [...without(s.learning), updated] : without(s.learning),
+    newTotal: s.newTotal,
+    reviewTotal: s.reviewTotal,
+  };
+  return { ...pools, current: pickNext(pools) };
+}
 
 function EmptyState({
   message,
@@ -38,19 +114,19 @@ function EmptyState({
         revenez demain pour continuer.
       </div>
       <div className="mt-2 flex gap-3.5">
+        <Link
+          href="/deck/cards"
+          className="rounded-lg border border-border-strong px-6 py-3 text-[14.5px] font-semibold text-ink-40"
+        >
+          Voir toutes les cartes du deck
+        </Link>
         <button
           type="button"
           onClick={() => setLimitOpen(true)}
-          className="cursor-pointer rounded-lg border border-border-strong px-6 py-3 text-[14.5px] font-semibold text-ink-40"
+          className="cursor-pointer rounded-lg bg-ink px-6 py-3 text-[14.5px] font-semibold text-white"
         >
           Modifier la limite quotidienne
         </button>
-        <Link
-          href="/training"
-          className="rounded-lg bg-ink px-6 py-3 text-[14.5px] font-semibold text-white"
-        >
-          Retour à l&apos;entraînement
-        </Link>
       </div>
       <DailyLimitModal
         open={limitOpen}
@@ -62,60 +138,77 @@ function EmptyState({
 }
 
 export function ReviewSession({
-  initialQueue,
-  counts,
+  initialNew,
+  initialLearning,
+  initialReview,
   dailyNewCardLimit,
+  srsConfig,
 }: {
-  initialQueue: QueueCard[];
-  counts: { new: number; learning: number; review: number };
+  initialNew: QueueCard[];
+  initialLearning: QueueCard[];
+  initialReview: QueueCard[];
   dailyNewCardLimit: number;
+  srsConfig: SrsConfig;
 }) {
-  const [queue] = useState(initialQueue);
-  const [index, setIndex] = useState(0);
+  const [session, setSession] = useState(() =>
+    startSession(initialNew, initialLearning, initialReview)
+  );
+  const [startedEmpty] = useState(session.current === null);
   const [attempt, setAttempt] = useState("");
   const [revealed, setRevealed] = useState(false);
-  const [rating, setRating] = useState(false);
+  // The rating being saved: its button shows as pressed, the others lock.
+  const [pressed, setPressed] = useState<Rating | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [limitOpen, setLimitOpen] = useState(false);
 
-  if (queue.length === 0) {
+  if (!session.current) {
     return (
       <EmptyState
-        message="Aucune carte à réviser aujourd'hui"
+        message={
+          startedEmpty ? "Aucune carte à réviser aujourd'hui" : "Session terminée pour aujourd'hui"
+        }
         dailyNewCardLimit={dailyNewCardLimit}
       />
     );
   }
 
-  if (index >= queue.length) {
-    return (
-      <EmptyState
-        message="Session terminée pour aujourd'hui"
-        dailyNewCardLimit={dailyNewCardLimit}
-      />
-    );
-  }
-
-  const card = queue[index];
-  const previews = ratingPreviews({
-    state: card.state,
-    currentStep: card.currentStep,
-    intervalDays: card.intervalDays,
-    easeFactor: card.easeFactor,
-  });
+  const card = session.current;
+  const counts = {
+    new: session.newCards.length,
+    learning: session.learning.length,
+    review: session.review.length,
+  };
+  // Same config and fuzz seed as the server, so the interval shown under
+  // each button is exactly the one saved when it's clicked.
+  const previews = ratingPreviews(
+    {
+      state: card.state,
+      currentStep: card.currentStep,
+      intervalDays: card.intervalDays,
+      easeFactor: card.easeFactor,
+    },
+    srsConfig,
+    { cardId: card.id, dueAt: new Date(card.dueAt) }
+  );
 
   async function rate(value: Rating) {
-    setRating(true);
+    setError(null);
+    setPressed(value);
     try {
-      await fetch("/api/deck/review", {
+      const res = await fetch("/api/deck/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cardId: card.id, rating: value }),
       });
-      setIndex((i) => i + 1);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
+      setSession((s) => applyRating(s, { ...card, ...data.card }));
       setAttempt("");
       setRevealed(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Une erreur est survenue.");
     } finally {
-      setRating(false);
+      setPressed(null);
     }
   }
 
@@ -207,23 +300,40 @@ export function ReviewSession({
       )}
 
       {revealed && (
-        <div className="flex w-full max-w-[640px] overflow-hidden rounded-[10px] border border-border">
-          {RATINGS.map((r, i) => (
-            <button
-              key={r}
-              type="button"
-              disabled={rating}
-              onClick={() => rate(r)}
-              className={
-                "flex flex-1 flex-col items-center gap-0.5 border-t-[3px] border-border-strong bg-white py-3.5 px-2 disabled:cursor-wait " +
-                (i > 0 ? "border-l border-border-soft" : "")
-              }
-            >
-              <div className="text-sm font-medium text-ink-40">{RATING_LABELS[r]}</div>
-              <div className="text-[11.5px] text-muted-light">{previews[r]}</div>
-            </button>
-          ))}
+        <div className="grid w-full max-w-[640px] grid-cols-4 gap-2.5">
+          {RATINGS.map((r) => {
+            const isPressed = pressed === r;
+            // Neutral → hover (light teal) → pressed (dark teal). While a
+            // rating is saving, the other buttons stay neutral and inert.
+            const state = isPressed
+              ? "cursor-wait border-accent-dark bg-accent-dark"
+              : pressed
+                ? "cursor-default border-border-strong bg-white"
+                : "cursor-pointer border-border-strong bg-white hover:border-t-accent-dark hover:bg-accent-light";
+            const hover = pressed ? "" : " group-hover:font-semibold group-hover:text-accent-ink";
+            const label = isPressed ? "font-semibold text-white" : "font-medium text-ink-40" + hover;
+            const preview = isPressed ? "font-semibold text-white" : "text-muted-light" + hover;
+            return (
+              <button
+                key={r}
+                type="button"
+                disabled={pressed !== null}
+                onClick={() => rate(r)}
+                className={
+                  "group flex flex-col items-center gap-0.5 rounded-lg border border-t-2 px-2 py-3.5 " +
+                  state
+                }
+              >
+                <div className={"text-sm " + label}>{RATING_LABELS[r]}</div>
+                <div className={"text-[11.5px] " + preview}>{previews[r]}</div>
+              </button>
+            );
+          })}
         </div>
+      )}
+
+      {error && (
+        <div className="w-full max-w-[640px] text-[12.5px] text-danger-text">{error}</div>
       )}
 
       <div className="w-full max-w-[640px]">

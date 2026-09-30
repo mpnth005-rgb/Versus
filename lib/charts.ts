@@ -9,6 +9,11 @@ const LINE_BOTTOM = 199;
 // Score scale — see lib/scoring.ts (scores are out of 20).
 const SCORE_MAX = 20;
 
+/** Vertical position of a score in the line chart's viewBox. */
+export function scoreY(value: number): number {
+  return LINE_TOP + ((SCORE_MAX - value) / SCORE_MAX) * (LINE_BOTTOM - LINE_TOP);
+}
+
 export function buildScoreLinePoints(scores: number[]): {
   linePoints: string;
   areaPoints: string;
@@ -16,8 +21,7 @@ export function buildScoreLinePoints(scores: number[]): {
   height: number;
 } {
   const n = scores.length;
-  const yFor = (value: number) =>
-    LINE_TOP + ((SCORE_MAX - value) / SCORE_MAX) * (LINE_BOTTOM - LINE_TOP);
+  const yFor = scoreY;
   const xFor = (i: number) => (n <= 1 ? LINE_WIDTH / 2 : (i * LINE_WIDTH) / (n - 1));
 
   const points = scores.map((s, i) => `${xFor(i)},${yFor(s)}`);

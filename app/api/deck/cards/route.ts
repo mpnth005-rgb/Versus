@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserQuota } from "@/lib/quota";
 
 const bodySchema = z.object({
   front: z.string().min(1),
@@ -13,6 +14,14 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
+
+  const quota = await getUserQuota(session.user.id);
+  if (!quota.isPremium) {
+    return NextResponse.json(
+      { error: "L'ajout manuel de cartes est réservé à Versus Upper." },
+      { status: 403 }
+    );
   }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));

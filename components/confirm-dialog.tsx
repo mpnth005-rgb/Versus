@@ -46,7 +46,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="cursor-pointer rounded-lg border border-border-strong px-5 py-2.5 text-[13.5px] font-semibold text-ink-40 disabled:opacity-60"
+            className="cursor-pointer rounded-lg border border-border-strong px-5 py-2.5 text-[13.5px] font-semibold text-ink-40"
           >
             {cancelLabel}
           </button>
@@ -55,11 +55,11 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={pending}
             className={
-              "cursor-pointer rounded-lg px-5 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60 " +
+              "cursor-pointer rounded-lg px-5 py-2.5 text-[13.5px] font-semibold text-white " +
               (danger ? "bg-[oklch(0.5_0.18_25)]" : "bg-ink")
             }
           >
-            {pending ? "…" : confirmLabel}
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -35,7 +35,7 @@ export default async function CompletePage({
       <div className="font-serif text-[28px] font-semibold text-ink">Exercice terminé !</div>
       <div className="max-w-[420px] text-[15px] leading-[1.6] text-muted-light">
         Score :{" "}
-        {exercise.correction ? `${formatScore(exercise.correction.overallScore)}/20` : "—"}
+        {exercise.correction ? `${formatScore(exercise.correction.adjustedScore)}/20` : "—"}
         {cardsAdded > 0 && (
           <>
             {" "}

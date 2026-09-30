@@ -42,7 +42,7 @@ function QuotaWidget({ quota, onUpgradeClick }: { quota: Quota; onUpgradeClick: 
     >
       <div className="mb-1 font-semibold text-ink-softer">Versus gratuit</div>
       <div className="whitespace-nowrap">
-        {quota.exercisesRemaining} exercice{quota.exercisesRemaining === 1 ? "" : "s"} restant
+        {quota.exercisesRemaining} texte{quota.exercisesRemaining === 1 ? "" : "s"} restant
         {quota.exercisesRemaining === 1 ? "" : "s"} ce mois-ci
       </div>
     </button>

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserQuota } from "@/lib/quota";
 import { TranslationEditor } from "@/components/training/translation-editor";
 
 export default async function EditorPage({
@@ -13,7 +14,10 @@ export default async function EditorPage({
   if (!session?.user?.id) redirect("/login");
 
   const { id } = await params;
-  const exercise = await prisma.exercise.findUnique({ where: { id } });
+  const [exercise, quota] = await Promise.all([
+    prisma.exercise.findUnique({ where: { id } }),
+    getUserQuota(session.user.id),
+  ]);
   if (!exercise || exercise.userId !== session.user.id) notFound();
 
   if (exercise.status === "COMPLETED") redirect(`/training/${id}/complete`);
@@ -33,6 +37,7 @@ export default async function EditorPage({
         sourceText: exercise.sourceText,
         wordCount: exercise.wordCount,
       }}
+      canRegenerate={quota.canStartExercise}
     />
   );
 }

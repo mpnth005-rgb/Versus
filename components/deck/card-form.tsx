@@ -96,7 +96,10 @@ export function CardForm({
           type="button"
           onClick={submit}
           disabled={pending || !front.trim() || !back.trim()}
-          className="cursor-pointer rounded-lg bg-ink px-6.5 py-3.5 text-[14.5px] font-semibold text-white disabled:opacity-60"
+          className={
+            "cursor-pointer rounded-lg bg-ink px-6.5 py-3.5 text-[14.5px] font-semibold text-white " +
+            (!front.trim() || !back.trim() ? "opacity-60" : "")
+          }
         >
           {mode === "create" ? "Ajouter la carte" : "Enregistrer"}
         </button>

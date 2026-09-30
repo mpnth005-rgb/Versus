@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { getProgressOverview, getSessionsHistory } from "@/lib/progress";
-import { buildScoreLinePoints, buildWeeklyBars, SCORE_MAX } from "@/lib/charts";
-import { formatShortDate, formatScore } from "@/lib/format";
-import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
+import { buildScoreLinePoints, buildWeeklyBars, scoreY, SCORE_MAX } from "@/lib/charts";
+import { formatScore } from "@/lib/format";
+import { HistoryList } from "@/components/progress/history-list";
 
 const MONTH_LABELS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -26,17 +26,16 @@ function shiftMonth(yearMonth: string, delta: number): string {
 export default async function ProgressPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; page?: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const { month, page } = await searchParams;
-  const pageNum = Math.max(0, Number(page ?? 0) || 0);
+  const { month } = await searchParams;
 
   const [overview, history] = await Promise.all([
     getProgressOverview(session.user.id, month),
-    getSessionsHistory(session.user.id, pageNum),
+    getSessionsHistory(session.user.id),
   ]);
 
   const canGoPrevMonth = overview.availableMonths.some((m) => m < overview.selectedMonth);
@@ -68,7 +67,10 @@ export default async function ProgressPage({
             </div>
             <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-accent">
               {canGoPrevMonth ? (
-                <Link href={`/progress?month=${shiftMonth(overview.selectedMonth, -1)}`}>
+                <Link
+                  href={`/progress?month=${shiftMonth(overview.selectedMonth, -1)}`}
+                  className="text-ink-40"
+                >
                   ‹
                 </Link>
               ) : (
@@ -76,7 +78,10 @@ export default async function ProgressPage({
               )}
               <span>{monthLabel(overview.selectedMonth)}</span>
               {canGoNextMonth ? (
-                <Link href={`/progress?month=${shiftMonth(overview.selectedMonth, 1)}`}>
+                <Link
+                  href={`/progress?month=${shiftMonth(overview.selectedMonth, 1)}`}
+                  className="text-ink-40"
+                >
                   ›
                 </Link>
               ) : (
@@ -98,15 +103,39 @@ export default async function ProgressPage({
               Pas encore de données.
             </div>
           ) : (
+            // The chart stretches to the card (preserveAspectRatio="none",
+            // non-scaling strokes) so a viewBox y maps to the same % of the
+            // 220px height in both columns — each label sits exactly on its
+            // gridline whatever the card width.
             <div className="flex gap-2">
-              <svg viewBox="0 0 40 200" className="h-[200px] w-[34px] flex-shrink-0">
-                <text x="32" y="14" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">{SCORE_MAX}</text>
-                <text x="32" y="102" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">{SCORE_MAX / 2}</text>
-                <text x="32" y="196" fontSize="11" fill="var(--color-muted-light)" textAnchor="end">0</text>
-              </svg>
-              <svg viewBox={`0 0 ${lineWidth} ${lineHeight}`} className="h-[220px] w-full">
-                <line x1="0" y1="10" x2={lineWidth} y2="10" stroke="var(--color-border-soft)" strokeWidth="1" />
-                <line x1="0" y1="102" x2={lineWidth} y2="102" stroke="var(--color-border-soft)" strokeWidth="1" />
+              <div className="relative h-[220px] w-[34px] flex-shrink-0 text-[11px] text-muted-light">
+                {[SCORE_MAX, SCORE_MAX / 2, 0].map((value) => (
+                  <span
+                    key={value}
+                    className="absolute right-1.5 -translate-y-1/2 leading-none"
+                    style={{ top: `${(scoreY(value) / lineHeight) * 100}%` }}
+                  >
+                    {value}
+                  </span>
+                ))}
+              </div>
+              <svg
+                viewBox={`0 0 ${lineWidth} ${lineHeight}`}
+                preserveAspectRatio="none"
+                className="h-[220px] w-full"
+              >
+                {[SCORE_MAX, SCORE_MAX / 2].map((value) => (
+                  <line
+                    key={value}
+                    x1="0"
+                    y1={scoreY(value)}
+                    x2={lineWidth}
+                    y2={scoreY(value)}
+                    stroke="var(--color-border-soft)"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
                 <polygon points={areaPoints} fill="var(--color-accent-light)" opacity="0.5" stroke="none" />
                 <polyline
                   points={linePoints}
@@ -115,8 +144,17 @@ export default async function ProgressPage({
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
                 />
-                <line x1="0" y1="199" x2={lineWidth} y2="199" stroke="var(--color-border-strong)" strokeWidth="1" />
+                <line
+                  x1="0"
+                  y1={scoreY(0)}
+                  x2={lineWidth}
+                  y2={scoreY(0)}
+                  stroke="var(--color-border-strong)"
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                />
               </svg>
             </div>
           )}
@@ -157,52 +195,12 @@ export default async function ProgressPage({
           <div>Score</div>
           <div>Date</div>
         </div>
-        {history.sessions.length === 0 ? (
+        {history.length === 0 ? (
           <div className="px-6 py-8 text-center text-[13.5px] text-muted-light">
             Aucune session terminée pour le moment.
           </div>
         ) : (
-          history.sessions.map((s) => (
-            <div
-              key={s.id}
-              className="grid grid-cols-[2.2fr_1.6fr_1fr_1fr] items-center border-t border-border-soft px-6 py-4 text-sm"
-            >
-              <div className="text-ink-softer">{s.title}</div>
-              <div className="text-muted-light">
-                {TEXT_TYPE_LABELS[s.textType]} · {LEVEL_LABELS[s.level]}
-              </div>
-              <div className="font-semibold text-accent">{formatScore(s.score)}/20</div>
-              <div className="text-muted-light">{formatShortDate(s.createdAt)}</div>
-            </div>
-          ))
-        )}
-        {history.sessions.length > 0 && (
-          <div className="flex items-center justify-center gap-3.5 border-t border-border-soft py-3">
-            {history.hasPrev ? (
-              <Link
-                href={`/progress?page=${pageNum - 1}`}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40"
-              >
-                ↑
-              </Link>
-            ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-soft text-[13px] text-muted-ghost">
-                ↑
-              </span>
-            )}
-            {history.hasNext ? (
-              <Link
-                href={`/progress?page=${pageNum + 1}`}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40"
-              >
-                ↓
-              </Link>
-            ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-soft text-[13px] text-muted-ghost">
-                ↓
-              </span>
-            )}
-          </div>
+          <HistoryList sessions={history} />
         )}
       </div>
     </div>

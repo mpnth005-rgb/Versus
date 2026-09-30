@@ -24,7 +24,7 @@ async function getAllScoredExercises(userId: string): Promise<ScoredExercise[]> 
       title: e.title,
       textType: e.textType,
       level: e.level,
-      score: e.correction!.overallScore,
+      score: e.correction!.adjustedScore,
       createdAt: e.createdAt,
     }));
 }
@@ -76,33 +76,21 @@ export async function getProgressOverview(userId: string, selectedMonth?: string
   };
 }
 
-const PAGE_SIZE = 5;
+/** Every corrected exercise, newest first. The progress page shows them in
+ * one scroll-snapped list (5 rows visible) rather than paginating. */
+export async function getSessionsHistory(userId: string) {
+  const exercises = await prisma.exercise.findMany({
+    where: { userId, correction: { isNot: null } },
+    include: { correction: true },
+    orderBy: { createdAt: "desc" },
+  });
 
-export async function getSessionsHistory(userId: string, page: number) {
-  const [total, exercises] = await Promise.all([
-    prisma.exercise.count({ where: { userId, correction: { isNot: null } } }),
-    prisma.exercise.findMany({
-      where: { userId, correction: { isNot: null } },
-      include: { correction: true },
-      orderBy: { createdAt: "desc" },
-      skip: page * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-  ]);
-
-  return {
-    sessions: exercises.map((e) => ({
-      id: e.id,
-      title: e.title,
-      textType: e.textType,
-      level: e.level,
-      score: e.correction!.overallScore,
-      createdAt: e.createdAt,
-    })),
-    total,
-    page,
-    pageSize: PAGE_SIZE,
-    hasNext: (page + 1) * PAGE_SIZE < total,
-    hasPrev: page > 0,
-  };
+  return exercises.map((e) => ({
+    id: e.id,
+    title: e.title,
+    textType: e.textType,
+    level: e.level,
+    score: e.correction!.adjustedScore,
+    createdAt: e.createdAt,
+  }));
 }

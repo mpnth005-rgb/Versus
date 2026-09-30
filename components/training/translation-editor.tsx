@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
+import { LockIcon } from "@/components/lock-icon";
+import { UpsellModal } from "@/components/upsell-modal";
 import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
 
 export type EditorExercise = {
@@ -21,26 +23,31 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export function TranslationEditor({ exercise: initial }: { exercise: EditorExercise }) {
+export function TranslationEditor({
+  exercise: initial,
+  canRegenerate,
+}: {
+  exercise: EditorExercise;
+  // Regenerating consumes a text from the monthly quota, so it locks
+  // (and opens the upgrade modal) once a free user has none left.
+  canRegenerate: boolean;
+}) {
   const router = useRouter();
   const [exercise, setExercise] = useState(initial);
   const [translation, setTranslation] = useState("");
   const [regenerating, setRegenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   if (submitting) return <LoadingScreen variant="correct" />;
 
   const translationWords = wordCount(translation);
   const canSubmit = translation.trim().length > 0 && translationWords >= exercise.wordCount * 0.5;
 
-  // The theme carrying the chosen subtheme is shown first, as "Theme
-  // (Subtheme)"; the others follow plain.
-  const themesLabel = (
-    exercise.subtheme
-      ? [exercise.subtheme.theme, ...exercise.themes.filter((t) => t !== exercise.subtheme!.theme)]
-      : exercise.themes
-  )
+  // Themes keep the order they were picked in on the criteria form; the
+  // one carrying the chosen subtheme is shown as "Theme (Subtheme)".
+  const themesLabel = exercise.themes
     .map((t) => (exercise.subtheme?.theme === t ? `${t} (${exercise.subtheme.label})` : t))
     .join(" · ");
 
@@ -112,20 +119,32 @@ export function TranslationEditor({ exercise: initial }: { exercise: EditorExerc
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={regenerate}
-          disabled={regenerating}
-          className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-accent disabled:opacity-60"
-        >
-          <span
-            className={
-              "h-4 w-4 rounded-full border-2 border-accent border-t-transparent " +
-              (regenerating ? "animate-spin" : "")
-            }
-          />
-          Régénérer le texte
-        </button>
+        {canRegenerate ? (
+          <button
+            type="button"
+            onClick={regenerate}
+            disabled={regenerating}
+            className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-accent disabled:opacity-60"
+          >
+            <span
+              className={
+                "h-4 w-4 rounded-full border-2 border-accent border-t-transparent " +
+                (regenerating ? "animate-spin" : "")
+              }
+            />
+            Régénérer le texte
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setUpsellOpen(true)}
+            title="Réservé à Versus Upper"
+            className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-muted-lighter"
+          >
+            <LockIcon size={13} />
+            Régénérer le texte
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 gap-8">
@@ -178,6 +197,7 @@ export function TranslationEditor({ exercise: initial }: { exercise: EditorExerc
       </div>
 
       {error && <div className="text-[12.5px] text-danger-text">{error}</div>}
+      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
     </div>
   );
 }

@@ -31,41 +31,88 @@ export async function getSrsConfig(userId: string): Promise<SrsConfig> {
   };
 }
 
+// Like Anki, a study day rolls over at 4 a.m. (Paris time) rather than
+// midnight, so a late-night session still counts as the same day.
+const STUDY_DAY_TIME_ZONE = "Europe/Paris";
+const STUDY_DAY_ROLLOVER_HOUR = 4;
+
+/** UTC offset (ms) of STUDY_DAY_TIME_ZONE at the given instant. */
+function timeZoneOffsetMs(at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: STUDY_DAY_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
+  const wallClockAsUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second")
+  );
+  return wallClockAsUtc - (at.getTime() - at.getMilliseconds());
+}
+
+/** Start of the study day containing `now` (the last 4 a.m. Paris time). */
+export function startOfStudyDay(now: Date = new Date()): Date {
+  const local = new Date(now.getTime() + timeZoneOffsetMs(now));
+  if (local.getUTCHours() < STUDY_DAY_ROLLOVER_HOUR) {
+    local.setUTCDate(local.getUTCDate() - 1);
+  }
+  const rolloverAsUtc = Date.UTC(
+    local.getUTCFullYear(),
+    local.getUTCMonth(),
+    local.getUTCDate(),
+    STUDY_DAY_ROLLOVER_HOUR
+  );
+  // DST never switches at 4 a.m., so the offset at the rollover instant is
+  // the one in effect a few hours around it.
+  return new Date(rolloverAsUtc - timeZoneOffsetMs(new Date(rolloverAsUtc)));
+}
+
+/**
+ * Everything a review session needs, split by bucket. The session itself
+ * (components/deck/review-session.tsx) picks the next card Anki-style:
+ * - new cards: the oldest ones, up to what's left of today's quota;
+ * - learning: every LEARNING/RELEARNING card, even those whose minute
+ *   delay hasn't elapsed yet — they can be shown ahead of time once
+ *   nothing else is left;
+ * - review: cards due at any point before the next study day starts.
+ */
 export async function getReviewQueue(userId: string) {
-  const now = new Date();
+  const dayStart = startOfStudyDay();
+  const nextDayStart = startOfStudyDay(new Date(dayStart.getTime() + 30 * 60 * 60 * 1000));
   const dailyNewCardLimit = await getDailyNewCardLimit(userId);
 
-  const [dueLearning, dueRelearning, dueReview, newCards] = await Promise.all([
+  const introducedToday = await prisma.flashcard.count({
+    where: { userId, introducedAt: { gte: dayStart } },
+  });
+  const newCardsLeft = Math.max(0, dailyNewCardLimit - introducedToday);
+
+  const [newCards, learningCards, reviewCards] = await Promise.all([
+    newCardsLeft > 0
+      ? prisma.flashcard.findMany({
+          where: { userId, state: "NEW" },
+          orderBy: { createdAt: "asc" },
+          take: newCardsLeft,
+        })
+      : Promise.resolve([]),
     prisma.flashcard.findMany({
-      where: { userId, state: "LEARNING", dueAt: { lte: now } },
+      where: { userId, state: { in: ["LEARNING", "RELEARNING"] } },
       orderBy: { dueAt: "asc" },
     }),
     prisma.flashcard.findMany({
-      where: { userId, state: "RELEARNING", dueAt: { lte: now } },
+      where: { userId, state: "REVIEW", dueAt: { lt: nextDayStart } },
       orderBy: { dueAt: "asc" },
-    }),
-    prisma.flashcard.findMany({
-      where: { userId, state: "REVIEW", dueAt: { lte: now } },
-      orderBy: { dueAt: "asc" },
-    }),
-    prisma.flashcard.findMany({
-      where: { userId, state: "NEW" },
-      orderBy: { createdAt: "asc" },
-      take: dailyNewCardLimit,
     }),
   ]);
 
-  // Learning and relearning are mechanically identical (step ladders in
-  // minutes) and share one "apprentissage" bucket in the UI, per spec.
-  const queue = [...newCards, ...dueLearning, ...dueRelearning, ...dueReview];
-
-  return {
-    queue,
-    counts: {
-      new: newCards.length,
-      learning: dueLearning.length + dueRelearning.length,
-      review: dueReview.length,
-    },
-    dailyNewCardLimit,
-  };
+  return { newCards, learningCards, reviewCards, dailyNewCardLimit };
 }

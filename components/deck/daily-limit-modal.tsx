@@ -102,7 +102,7 @@ export function DailyLimitModal({
             type="button"
             onClick={save}
             disabled={saving}
-            className="flex-1 cursor-pointer rounded-lg bg-ink py-3 text-center text-sm font-semibold text-white disabled:opacity-60"
+            className="flex-1 cursor-pointer rounded-lg bg-ink py-3 text-center text-sm font-semibold text-white"
           >
             Enregistrer
           </button>

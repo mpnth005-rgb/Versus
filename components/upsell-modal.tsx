@@ -66,7 +66,7 @@ export function UpsellModal({
             type="button"
             disabled={loadingPlan !== null}
             onClick={() => subscribe("MONTHLY")}
-            className="flex flex-1 flex-col gap-1.5 rounded-xl border border-border-strong p-5 text-left cursor-pointer disabled:cursor-wait disabled:opacity-60"
+            className="flex flex-1 flex-col gap-1.5 rounded-xl border border-border-strong p-5 text-left cursor-pointer disabled:cursor-wait"
           >
             <div className="text-xs font-semibold uppercase tracking-[0.03em] text-muted-light">
               Mensuel
@@ -80,7 +80,7 @@ export function UpsellModal({
             type="button"
             disabled={loadingPlan !== null}
             onClick={() => subscribe("ANNUAL")}
-            className="relative flex flex-1 flex-col gap-1.5 rounded-xl border-2 border-accent p-5 text-left cursor-pointer disabled:cursor-wait disabled:opacity-60"
+            className="relative flex flex-1 flex-col gap-1.5 rounded-xl border-2 border-accent p-5 text-left cursor-pointer disabled:cursor-wait"
           >
             <div className="absolute -top-[11px] left-4 rounded-full bg-accent px-2.5 py-0.5 text-[10.5px] font-semibold text-white">
               -33%
