@@ -17,7 +17,26 @@ export type FlaggedSentence = {
   sourceSentence: string;
   userSentence: string;
   errors: SentenceError[];
+  // The matching sentence of the reference translation, saved at
+  // submission (absent on older corrections, which then show no dimming).
+  referenceSentence?: string | null;
 };
+
+/** Splits the full reference text around the corrected sentence so the
+ * rest can be dimmed; null when there's nothing to highlight. */
+function splitAroundSentence(
+  fullText: string,
+  sentence: FlaggedSentence
+): { before: string; match: string; after: string } | null {
+  const match = sentence.referenceSentence?.trim();
+  const start = match ? fullText.indexOf(match) : -1;
+  if (!match || start === -1) return null;
+  return {
+    before: fullText.slice(0, start),
+    match,
+    after: fullText.slice(start + match.length),
+  };
+}
 
 export type CorrectionData = {
   exerciseId: string;
@@ -39,6 +58,8 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
 
   const sentence = data.flaggedSentences[index];
   const hasErrors = data.flaggedSentences.length > 0;
+  // The rest of the reference is dimmed so the corrected sentence stands out.
+  const highlight = sentence ? splitAroundSentence(data.referenceTranslation, sentence) : null;
 
   // The dialog stays open and greyed out until the completion page
   // replaces this one; it only resets if the request fails.
@@ -156,7 +177,19 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           Traduction de référence complète
         </div>
         <div className="text-[15.5px] leading-[1.8] text-ink-40">
-          {data.referenceTranslation}
+          {highlight ? (
+            <>
+              <span className="text-[oklch(0.72_0.01_90)] transition-colors">
+                {highlight.before}
+              </span>
+              <span className="font-medium text-ink transition-colors">{highlight.match}</span>
+              <span className="text-[oklch(0.72_0.01_90)] transition-colors">
+                {highlight.after}
+              </span>
+            </>
+          ) : (
+            data.referenceTranslation
+          )}
         </div>
       </div>
 

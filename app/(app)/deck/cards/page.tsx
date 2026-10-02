@@ -31,15 +31,15 @@ export default async function DeckCardsPage({
   const otherDir = sortDir === "asc" ? "desc" : "asc";
 
   return (
-    <div className="flex flex-col gap-6 py-12 px-16">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col gap-6 py-12 px-16">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="font-serif text-[28px] font-semibold text-ink">Cartes du deck</div>
         <div className="text-[13px] text-muted-light">
           {cards.length} carte{cards.length === 1 ? "" : "s"}
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <AddCardButton isPremium={quota.isPremium} />
         <div className="flex items-center gap-2 text-[12.5px] text-muted-light">
           <span>Trier par</span>
@@ -66,8 +66,8 @@ export default async function DeckCardsPage({
         </div>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white">
-        <div className="grid grid-cols-[2.3fr_2.3fr_1fr_1.2fr_68px] bg-paper-alt px-6 py-3.5 text-[11.5px] font-semibold uppercase text-muted-light">
+      <div className="flex min-h-[180px] flex-col overflow-hidden rounded-xl border border-border bg-white">
+        <div className="grid shrink-0 grid-cols-[2.3fr_2.3fr_1fr_1.2fr_68px] bg-paper-alt px-6 py-3.5 text-[11.5px] font-semibold uppercase text-muted-light">
           <div>Recto</div>
           <div>Verso</div>
           <div>Créée</div>
@@ -79,9 +79,10 @@ export default async function DeckCardsPage({
             Aucune carte pour le moment.
           </div>
         ) : (
-          // A one-line row is 57px (py-4 + 24px action buttons + 1px border):
-          // the list is capped at 10 of those and scrolls past that.
-          <div className="max-h-[570px] overflow-y-auto">
+          // The page is exactly one screen tall (h-full inside the shell's
+          // h-screen scroller): the table shrinks to leave room for the
+          // "Retour" link and the bottom margin, and its rows scroll.
+          <div className="min-h-0 overflow-y-auto">
             {cards.map((card) => (
               <div
                 key={card.id}
@@ -107,7 +108,7 @@ export default async function DeckCardsPage({
         )}
       </div>
 
-      <Link href="/deck" className="text-[13px] font-medium text-ink-40">
+      <Link href="/deck" className="shrink-0 text-[13px] font-medium text-ink-40">
         ← Retour à la session de révision
       </Link>
     </div>

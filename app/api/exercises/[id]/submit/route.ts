@@ -57,6 +57,14 @@ export async function POST(
 
     // Scoring is always computed here, deterministically, from the fixed
     // penalty table — never trusted to the model. See lib/scoring.ts.
+    // Each flagged sentence keeps its reference counterpart so the
+    // correction page can highlight it inside the full reference text.
+    const sentenceCorrections = classification.flaggedSentences.map((s) => ({
+      ...s,
+      referenceSentence:
+        reference.phrases.find((p) => p.numero === s.sentenceNumber)?.phraseTraduite ?? null,
+    }));
+
     const errorTypes: ErrorType[] = classification.flaggedSentences.flatMap((s) =>
       s.errors.map((e) => e.type)
     );
@@ -78,7 +86,7 @@ export async function POST(
           overallScore,
           adjustedScore,
           referenceTranslation: reference.traductionComplete,
-          sentenceCorrections: classification.flaggedSentences,
+          sentenceCorrections,
           suggestedCards: classification.suggestedCards,
         },
         create: {
@@ -86,7 +94,7 @@ export async function POST(
           overallScore,
           adjustedScore,
           referenceTranslation: reference.traductionComplete,
-          sentenceCorrections: classification.flaggedSentences,
+          sentenceCorrections,
           suggestedCards: classification.suggestedCards,
         },
       }),

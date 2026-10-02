@@ -54,17 +54,19 @@ export default async function CompletePage({
         </div>
       )}
       <div className="mt-2.5 flex gap-3.5">
-        <Link
-          href="/training"
-          className={
-            "rounded-lg px-6.5 py-3 text-[14.5px] font-semibold " +
-            (cardsAdded > 0
-              ? "border border-border-strong text-ink-40"
-              : "bg-ink text-white")
-          }
-        >
-          Nouvel exercice
-        </Link>
+        {quota.canStartExercise && (
+          <Link
+            href="/training"
+            className={
+              "rounded-lg px-6.5 py-3 text-[14.5px] font-semibold " +
+              (cardsAdded > 0
+                ? "border border-border-strong text-ink-40"
+                : "bg-ink text-white")
+            }
+          >
+            Nouvel exercice
+          </Link>
+        )}
         {cardsAdded > 0 && (
           <Link
             href="/deck"
