@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LoadingScreen } from "@/components/loading-screen";
 import { LockIcon } from "@/components/lock-icon";
 import { UpsellModal } from "@/components/upsell-modal";
+import { NEWS_WARNED_KEY } from "@/components/training/news-warning";
 import {
   TEXT_TYPE_LABELS,
   LEVEL_LABELS,
@@ -23,19 +24,31 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
-  // "Ancrer dans l'actualité" starts off on every visit, and turning it on
-  // always goes through the warning first.
+  // "Ancrer dans l'actualité" starts off on every visit. The warning shows
+  // the first time it's turned on, then not again until an exercise is
+  // finished: the completion page clears the flag (NewsWarningReset), so
+  // generating a text and coming back to the criteria doesn't repeat it.
   const [anchoredInNews, setAnchoredInNews] = useState(false);
   const [newsWarningOpen, setNewsWarningOpen] = useState(false);
 
   function toggleAnchoredInNews() {
-    if (anchoredInNews) setAnchoredInNews(false);
+    if (anchoredInNews) return setAnchoredInNews(false);
+    let warned = false;
+    try {
+      warned = localStorage.getItem(NEWS_WARNED_KEY) === "1";
+    } catch {}
+    if (warned) setAnchoredInNews(true);
     else setNewsWarningOpen(true);
   }
 
   function confirmNewsWarning() {
     setNewsWarningOpen(false);
     setAnchoredInNews(true);
+    try {
+      localStorage.setItem(NEWS_WARNED_KEY, "1");
+    } catch {
+      // Not remembered: the warning will simply show again next time.
+    }
   }
 
   if (pending) return <LoadingScreen variant="generate" />;
@@ -63,7 +76,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           textType,
           level,
           themes,
-          anchoredInNews,
+          anchoredInNews: textType === "JOURNALISTIC" && anchoredInNews,
         }),
       });
       const data = await res.json();
@@ -94,7 +107,11 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             <button
               key={t}
               type="button"
-              onClick={() => setTextType(t)}
+              onClick={() => {
+                setTextType(t);
+                // The news option only exists for journalistic texts.
+                if (t !== "JOURNALISTIC") setAnchoredInNews(false);
+              }}
               className={
                 "cursor-pointer rounded-lg px-5 py-2.5 text-sm font-medium " +
                 (textType === t
@@ -106,6 +123,40 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             </button>
           ))}
         </div>
+        {textType === "JOURNALISTIC" && (
+          <div className="mt-1.5">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={anchoredInNews}
+              onClick={toggleAnchoredInNews}
+              className="flex cursor-pointer items-start gap-3.5 text-left"
+            >
+              <span
+                className={
+                  "relative mt-0.5 h-6 w-11 flex-shrink-0 rounded-full transition-colors " +
+                  (anchoredInNews ? "bg-ink" : "bg-paper-alt-3")
+                }
+              >
+                <span
+                  className={
+                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-[left] " +
+                    (anchoredInNews ? "left-[22px]" : "left-0.5")
+                  }
+                />
+              </span>
+              <span>
+                <span className="block text-[15px] font-semibold text-ink-softer">
+                  Ancrer dans l&apos;actualité
+                </span>
+                <span className="mt-0.5 block text-[13px] text-muted-light">
+                  Recherche l&apos;actualité sur internet : événements récents, personnalités publiques et
+                  dates précises.
+                </span>
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3.5 border-b border-border py-7">
@@ -156,35 +207,6 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             );
           })}
         </div>
-
-        {theme && (
-          <div className="mt-2 flex items-center justify-between gap-6 rounded-xl border border-border bg-white px-5 py-4">
-            <div>
-              <div className="text-sm font-semibold text-ink-softer">Ancrer dans l&apos;actualité</div>
-              <div className="mt-0.5 text-[12.5px] text-muted-light">
-                Recherche l&apos;actualité sur internet : événements récents, personnalités publiques et dates précises.
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={anchoredInNews}
-              aria-label="Ancrer dans l'actualité"
-              onClick={toggleAnchoredInNews}
-              className={
-                "relative h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors " +
-                (anchoredInNews ? "bg-ink" : "bg-paper-alt-3")
-              }
-            >
-              <span
-                className={
-                  "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-[left] " +
-                  (anchoredInNews ? "left-[22px]" : "left-0.5")
-                }
-              />
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="mt-8 flex items-center gap-5">

@@ -257,7 +257,6 @@ function realityRules(params: { anchoredInNews?: boolean }, today: string): stri
   - OBLIGATOIRE : le texte nomme au moins une ou deux personnalités publiques réelles, s'appuie sur au moins un événement réel récent (semaines ou mois précédant la date du jour) et cite au moins une date précise — tous tirés de tes recherches, pas de ta mémoire.
   - Les personnalités sont évoquées pour leurs actes et positions publics rapportés par les sources.
   - Citations : uniquement celles trouvées dans les sources, traduites fidèlement en français ; n'en invente jamais. Accusations ou mises en cause : uniquement si les sources les rapportent, et présentées comme telles (« selon… »), jamais affirmées par le texte lui-même.
-  - Pour un texte littéraire ou quotidien : un ou des personnages fictifs vivent, commentent ou subissent ces faits réels.
   - Si la consigne de structure évoque une source générique (« un responsable », « un expert »), tu peux la remplacer par une source réelle trouvée.
   - N'utilise aucun personnage ou œuvre sous droit d'auteur.`;
   }

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserQuota } from "@/lib/quota";
 import { formatScore } from "@/lib/format";
+import { NewsWarningReset } from "@/components/training/news-warning";
 
 export default async function CompletePage({
   params,
@@ -29,6 +30,7 @@ export default async function CompletePage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-[22px] px-16 text-center">
+      <NewsWarningReset />
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-light text-[28px] text-[oklch(0.4_0.11_200)]">
         ✓
       </div>

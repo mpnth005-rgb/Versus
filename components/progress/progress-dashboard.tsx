@@ -262,7 +262,7 @@ export function ProgressDashboard({
 
       <div className="flex gap-5">
         <div className={card + " min-w-0 flex-[1.4] px-7 py-6"}>
-          <ScoreChart exercises={exercises} />
+          <ScoreChart exercises={exercises} now={nowIso} />
         </div>
 
         <div className={card + " flex min-w-0 flex-1 flex-col gap-4 px-7 py-6"}>

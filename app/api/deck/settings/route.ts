@@ -3,9 +3,10 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { MAX_DAILY_NEW_CARDS } from "@/lib/constants";
 
 const bodySchema = z.object({
-  dailyNewCardLimit: z.number().int().min(0).max(200),
+  dailyNewCardLimit: z.number().int().min(0).max(MAX_DAILY_NEW_CARDS),
 });
 
 export async function POST(req: NextRequest) {

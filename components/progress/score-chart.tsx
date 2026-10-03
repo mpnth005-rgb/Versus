@@ -6,7 +6,13 @@ import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
 import { formatScore, formatShortDate } from "@/lib/format";
 import { scoreY, SCORE_MAX } from "@/lib/charts";
 
-type Point = { id: string; textType: string; level: string; score: number; date: Date };
+type Point = {
+  id: string;
+  textType: string;
+  level: string;
+  score: number;
+  date: Date;
+};
 
 // Same vertical scale as lib/charts (viewBox 220 tall, 0 at y=199, 20 at
 // y=10), so gridlines and labels line up with scoreY().
@@ -64,8 +70,12 @@ export function FilterSelect({
         }
       >
         <span className="text-muted-light">{label}</span>
-        <span className="font-semibold text-ink-softer">{value === null ? "Tous" : labels[value]}</span>
-        <span className="ml-1.5 text-[9px] text-ink-40">{open ? "▴" : "▾"}</span>
+        <span className="font-semibold text-ink-softer">
+          {value === null ? "Tous" : labels[value]}
+        </span>
+        <span className="ml-1.5 text-[9px] text-ink-40">
+          {open ? "▴" : "▾"}
+        </span>
       </button>
       {open && (
         <ul
@@ -103,66 +113,250 @@ export function FilterSelect({
   );
 }
 
+// "all" = the whole history (default); "month" / "week" = one period at a
+// time, navigated with ‹ ›.
+type Granularity = "all" | "week" | "month";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MONTHS = [
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
+];
+
+const dayOf = (d: Date) =>
+  Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+
+/** [start, end) of the week (Monday-based) or month that is `offset`
+ * periods before the one containing `now`, as UTC day timestamps. */
+function periodBounds(
+  now: Date,
+  granularity: "week" | "month",
+  offset: number,
+) {
+  if (granularity === "month") {
+    const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1);
+    const d = new Date(start);
+    return { start, end: Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) };
+  }
+  const today = dayOf(now);
+  const monday = today - ((new Date(today).getUTCDay() + 6) % 7) * DAY_MS;
+  const start = monday - offset * 7 * DAY_MS;
+  return { start, end: start + 7 * DAY_MS };
+}
+
+function periodLabel(
+  start: number,
+  end: number,
+  granularity: "week" | "month",
+): string {
+  const d = new Date(start);
+  if (granularity === "month")
+    return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${formatShortDate(d)} – ${formatShortDate(new Date(end - DAY_MS))}`;
+}
+
+const average = (scores: number[]) =>
+  Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10;
+
 /**
- * "Évolution du score": every exercise as a dot at its date and score, and
- * the running average up to each date as a line. Hovering a dot shows its
- * date, type, level, score and the average at that point. Positions are in
- * % of the plot so dots stay round however wide the card is.
+ * "Évolution du score": the whole history ("Tout", default) or one week or
+ * month at a time. The line is the running average of
+ * every shown score up to each day (the "moyenne à date"), drawn across the
+ * whole period — a period still in progress just stops at its last exercise.
+ * The line starts on the period's first day at the average inherited from
+ * earlier periods, so even a single exercise draws a visible move. A period
+ * without any exercise shows "Aucune donnée". Positions are in % of the plot
+ * so markers stay round however wide the card is.
  */
-export function ScoreChart({ exercises }: { exercises: Point[] }) {
+export function ScoreChart({
+  exercises,
+  now: nowIso,
+}: {
+  exercises: Point[];
+  now: string;
+}) {
+  const now = new Date(nowIso);
+  const [granularity, setGranularity] = useState<Granularity>("all");
+  const [offset, setOffset] = useState(0);
   const [level, setLevel] = useState<string | null>(null);
   const [textType, setTextType] = useState<string | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
 
   const shown = exercises.filter(
-    (e) => (level === null || e.level === level) && (textType === null || e.textType === textType)
+    (e) =>
+      (level === null || e.level === level) &&
+      (textType === null || e.textType === textType),
   );
+  const shownDays = [...new Set(shown.map((e) => dayOf(e.date)))];
+  // "Tout" spans the first to the last shown exercise day, like the original
+  // overview; a week or month spans that whole period.
+  const { start, end } =
+    granularity === "all"
+      ? {
+          start: shownDays[0] ?? dayOf(now),
+          end: (shownDays[shownDays.length - 1] ?? dayOf(now)) + DAY_MS,
+        }
+      : periodBounds(now, granularity, offset);
+  const firstEver = exercises.length > 0 ? dayOf(exercises[0].date) : start;
 
-  // One point per day: the average of every shown score up to the end of
-  // that day, plus how many exercises were done that day (for the tooltip).
-  const dayOf = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const days = [...new Set(shown.map((e) => dayOf(e.date)))].map((day) => {
-    const upTo = shown.filter((e) => dayOf(e.date) <= day).map((e) => e.score);
-    return {
+  const before = shown.filter((e) => dayOf(e.date) < start).map((e) => e.score);
+  const inherited = before.length > 0 ? average(before) : null;
+
+  // One point per exercise day in the period: the average of every shown
+  // score up to the end of that day, plus that day's count (for the tooltip).
+  const days = shownDays
+    .filter((day) => day >= start && day < end)
+    .map((day) => ({
       day,
-      avg: Math.round((upTo.reduce((a, b) => a + b, 0) / upTo.length) * 10) / 10,
+      avg: average(
+        shown.filter((e) => dayOf(e.date) <= day).map((e) => e.score),
+      ),
       count: shown.filter((e) => dayOf(e.date) === day).length,
-    };
-  });
+    }));
 
-  const t0 = days[0]?.day ?? 0;
-  const t1 = days[days.length - 1]?.day ?? 0;
-  const xPct = (day: number) => (t1 === t0 ? 50 : ((day - t0) / (t1 - t0)) * 100);
+  const lastDay = end - DAY_MS;
+  const xPct = (day: number) =>
+    lastDay === start ? 50 : ((day - start) / (lastDay - start)) * 100;
   const yPct = (score: number) => (scoreY(score) / VIEW_H) * 100;
 
-  const avgLine = days.map((d) => `${(xPct(d.day) / 100) * VIEW_W},${scoreY(d.avg)}`).join(" ");
-  const xLabels =
-    days.length === 0
+  const linePoints = [
+    ...(inherited !== null && days.length > 0 && days[0].day !== start
+      ? [{ day: start, avg: inherited }]
+      : []),
+    ...days,
+  ];
+  const avgLine = linePoints
+    .map((d) => `${(xPct(d.day) / 100) * VIEW_W},${scoreY(d.avg)}`)
+    .join(" ");
+  const midDay = start + Math.floor((lastDay - start) / DAY_MS / 2) * DAY_MS;
+  const xLabels = (
+    lastDay === start
       ? []
-      : t1 === t0
-        ? [{ left: 50, date: new Date(t0) }]
-        : [0, 50, 100].map((left) => ({ left, date: new Date(t0 + ((t1 - t0) * left) / 100) }));
+      : [
+          { left: 0, text: formatShortDate(new Date(start)) },
+          {
+            left: xPct(midDay),
+            text:
+              granularity === "month"
+                ? String(new Date(midDay).getUTCDate())
+                : formatShortDate(new Date(midDay)),
+          },
+          { left: 100, text: formatShortDate(new Date(lastDay)) },
+        ]
+  ).concat(
+    lastDay === start
+      ? [{ left: 50, text: formatShortDate(new Date(start)) }]
+      : [],
+  );
 
   const active = days.find((d) => d.day === hovered) ?? null;
+  const canGoBack = start > firstEver;
+  const canGoForward = offset > 0;
+
+  function changeGranularity(next: Granularity) {
+    setGranularity(next);
+    setOffset(0);
+  }
+
+  const arrow = (
+    enabled: boolean,
+    onClick: () => void,
+    label: string,
+    glyph: string,
+  ) => (
+    <button
+      type="button"
+      disabled={!enabled}
+      onClick={onClick}
+      aria-label={label}
+      className={
+        "px-1 text-[13px] " +
+        (enabled
+          ? "cursor-pointer text-ink-40"
+          : "cursor-default text-muted-ghost")
+      }
+    >
+      {glyph}
+    </button>
+  );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-semibold text-ink-softer">Évolution du score</div>
-        <div className="flex gap-2">
-          <FilterSelect label="Niveau" value={level} options={LEVELS} labels={LEVEL_LABELS} onChange={setLevel} />
-          <FilterSelect
-            label="Type"
-            value={textType}
-            options={TEXT_TYPES}
-            labels={TEXT_TYPE_LABELS}
-            onChange={setTextType}
-          />
+        <div className="text-sm font-semibold text-ink-softer">
+          Évolution du score
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex rounded-lg bg-paper-alt-2 p-0.5">
+            {(["all", "month", "week"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => changeGranularity(g)}
+                className={
+                  "cursor-pointer rounded-md px-3 py-1 text-[12.5px] " +
+                  (granularity === g
+                    ? "bg-white font-semibold text-ink-softer shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                    : "font-medium text-muted-light")
+                }
+              >
+                {g === "all" ? "Tout" : g === "month" ? "Mois" : "Semaine"}
+              </button>
+            ))}
+          </div>
+          {granularity !== "all" && (
+            <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-softer">
+              {arrow(
+                canGoBack,
+                () => setOffset((o) => o + 1),
+                "Période précédente",
+                "‹",
+              )}
+              <span className="whitespace-nowrap">
+                {periodLabel(start, end, granularity)}
+              </span>
+              {arrow(
+                canGoForward,
+                () => setOffset((o) => o - 1),
+                "Période suivante",
+                "›",
+              )}
+            </div>
+          )}
         </div>
       </div>
 
+      <div className="flex gap-2">
+        <FilterSelect
+          label="Niveau"
+          value={level}
+          options={LEVELS}
+          labels={LEVEL_LABELS}
+          onChange={setLevel}
+        />
+        <FilterSelect
+          label="Type"
+          value={textType}
+          options={TEXT_TYPES}
+          labels={TEXT_TYPE_LABELS}
+          onChange={setTextType}
+        />
+      </div>
+
       {days.length === 0 ? (
-        <div className="py-16 text-center text-[13px] text-muted-light">Aucune donnée</div>
+        <div className="py-16 text-center text-[13px] text-muted-light">
+          Aucune donnée
+        </div>
       ) : (
         <div>
           <div className="flex gap-2">
@@ -213,12 +407,15 @@ export function ScoreChart({ exercises }: { exercises: Point[] }) {
                 />
               </svg>
 
-              {/* A single day has no line to draw: show its average as a dot
-                  as thick as the line instead. */}
-              {days.length === 1 && (
+              {/* No inherited average and a single day: no line to draw, so
+                  show that day's average as a dot as thick as the line. */}
+              {linePoints.length === 1 && (
                 <span
                   className="absolute h-[3px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-dark"
-                  style={{ left: `${xPct(days[0].day)}%`, top: `${yPct(days[0].avg)}%` }}
+                  style={{
+                    left: `${xPct(linePoints[0].day)}%`,
+                    top: `${yPct(linePoints[0].avg)}%`,
+                  }}
                 />
               )}
 
@@ -228,7 +425,9 @@ export function ScoreChart({ exercises }: { exercises: Point[] }) {
                 <span
                   key={d.day}
                   onMouseEnter={() => setHovered(d.day)}
-                  onMouseLeave={() => setHovered((h) => (h === d.day ? null : h))}
+                  onMouseLeave={() =>
+                    setHovered((h) => (h === d.day ? null : h))
+                  }
                   className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center"
                   style={{ left: `${xPct(d.day)}%`, top: `${yPct(d.avg)}%` }}
                 >
@@ -248,11 +447,17 @@ export function ScoreChart({ exercises }: { exercises: Point[] }) {
                         ? "-translate-x-full"
                         : "-translate-x-1/2")
                   }
-                  style={{ left: `${xPct(active.day)}%`, top: `${yPct(active.avg)}%` }}
+                  style={{
+                    left: `${xPct(active.day)}%`,
+                    top: `${yPct(active.avg)}%`,
+                  }}
                 >
-                  <div className="font-semibold">{formatShortDate(new Date(active.day))}</div>
+                  <div className="font-semibold">
+                    {formatShortDate(new Date(active.day))}
+                  </div>
                   <div className="text-white/70">
-                    Moyenne à date {formatScore(active.avg)}/20 · {active.count} exercice
+                    Moyenne à date {formatScore(active.avg)}/20 · {active.count}{" "}
+                    exercice
                     {active.count === 1 ? "" : "s"}
                   </div>
                 </div>
@@ -265,11 +470,15 @@ export function ScoreChart({ exercises }: { exercises: Point[] }) {
                 key={l.left}
                 className={
                   "absolute whitespace-nowrap " +
-                  (l.left === 0 ? "" : l.left === 100 ? "-translate-x-full" : "-translate-x-1/2")
+                  (l.left === 0
+                    ? ""
+                    : l.left === 100
+                      ? "-translate-x-full"
+                      : "-translate-x-1/2")
                 }
                 style={{ left: `${l.left}%` }}
               >
-                {formatShortDate(l.date)}
+                {l.text}
               </span>
             ))}
           </div>

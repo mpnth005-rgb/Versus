@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { MAX_DAILY_NEW_CARDS } from "@/lib/constants";
+
 export function DailyLimitModal({
   open,
   initialValue,
@@ -76,7 +78,7 @@ export function DailyLimitModal({
           </div>
           <button
             type="button"
-            onClick={() => setValue((v) => Math.min(40, v + 1))}
+            onClick={() => setValue((v) => Math.min(MAX_DAILY_NEW_CARDS, v + 1))}
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[9px] border border-border-strong text-lg text-ink-40"
           >
             +
@@ -85,14 +87,14 @@ export function DailyLimitModal({
         <input
           type="range"
           min={0}
-          max={40}
+          max={MAX_DAILY_NEW_CARDS}
           value={value}
           onChange={(e) => setValue(Number(e.target.value))}
           className="w-full accent-accent"
         />
         <div className="flex justify-between text-[11.5px] text-muted-lighter">
           <span>0</span>
-          <span>40</span>
+          <span>{MAX_DAILY_NEW_CARDS}</span>
         </div>
         <div className="rounded-lg bg-paper-alt px-4 py-3 text-[12.5px] leading-[1.55] text-muted-light">
           <span className="font-semibold text-ink-softer">{introducedToday}</span> nouvelle

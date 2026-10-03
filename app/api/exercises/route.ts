@@ -33,8 +33,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // "Ancrer dans l'actualité": generation searches the web (lib/ai.ts).
-  const anchoredInNews = parsed.data.anchoredInNews === true;
+  // "Ancrer dans l'actualité" (journalistic texts only): generation searches
+  // the web (lib/ai.ts).
+  const anchoredInNews =
+    parsed.data.anchoredInNews === true && parsed.data.textType === "JOURNALISTIC";
 
   try {
     // The subtheme is no longer picked by the learner: lib/ai.ts draws one
