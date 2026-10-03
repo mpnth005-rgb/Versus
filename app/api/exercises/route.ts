@@ -3,19 +3,14 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/app/generated/prisma/client";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
-import { ANGLOPHONE_THEME, MAX_THEMES, THEME_OPTIONS, THEME_SUBTOPICS } from "@/lib/constants";
+import { MAX_THEMES, THEME_OPTIONS } from "@/lib/constants";
 
 const bodySchema = z.object({
   textType: z.enum(["LITERARY", "JOURNALISTIC", "DAILY"]),
   level: z.enum(["A2", "B1", "B2", "C1"]),
   themes: z.array(z.enum(THEME_OPTIONS)).max(MAX_THEMES),
-  subtheme: z
-    .object({ theme: z.enum(THEME_OPTIONS), label: z.string() })
-    .nullable()
-    .optional(),
   anchoredInNews: z.boolean().optional(),
 });
 
@@ -38,22 +33,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Only trust a subtheme that actually belongs to a selected theme and
-  // exists in that theme's list — drop anything else rather than reject
-  // the whole request.
-  const subtheme =
-    parsed.data.subtheme &&
-    parsed.data.themes.includes(parsed.data.subtheme.theme) &&
-    THEME_SUBTOPICS[parsed.data.subtheme.theme]?.includes(parsed.data.subtheme.label)
-      ? parsed.data.subtheme
-      : null;
-
-  // "Ancrer dans l'actualité" only exists for Civilisation anglophone.
-  const anchoredInNews =
-    parsed.data.anchoredInNews === true && parsed.data.themes.includes(ANGLOPHONE_THEME);
+  // "Ancrer dans l'actualité": generation searches the web (lib/ai.ts).
+  const anchoredInNews = parsed.data.anchoredInNews === true;
 
   try {
-    const generated = await generateExerciseText({ ...parsed.data, subtheme, anchoredInNews });
+    // The subtheme is no longer picked by the learner: lib/ai.ts draws one
+    // (and an angle within it) for every generation.
+    const generated = await generateExerciseText({ ...parsed.data, anchoredInNews });
     const exercise = await prisma.exercise.create({
       data: {
         userId: session.user.id,
@@ -61,9 +47,6 @@ export async function POST(req: NextRequest) {
         textType: parsed.data.textType,
         level: parsed.data.level,
         themes: parsed.data.themes,
-        // Nullable Json columns need Prisma.DbNull, not a plain `null`,
-        // to actually store SQL NULL rather than a JSON "null" literal.
-        subtheme: subtheme ?? Prisma.DbNull,
         anchoredInNews,
         sourceText: generated.sourceText,
         wordCount: generated.wordCount,

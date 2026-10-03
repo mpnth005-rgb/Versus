@@ -174,8 +174,8 @@ model Exercise {
   // Persisted so regenerating the text re-applies the same angle instead
   // of re-rolling a random one.
   subtheme   Json?
-  // "Ancrer dans l'actualité" (Civilisation anglophone only): the text may
-  // name current leaders, recent events, precise figures and dates.
+  // "Ancrer dans l'actualité": generation searched the web and the text
+  // names real public figures, recent events and precise dates.
   // Persisted so regeneration keeps it and the editor can show the badge.
   anchoredInNews Boolean @default(false)
   sourceText String

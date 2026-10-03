@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
@@ -10,64 +10,32 @@ import {
   TEXT_TYPE_LABELS,
   LEVEL_LABELS,
   THEME_OPTIONS,
-  THEME_SUBTOPICS,
-  ANGLOPHONE_THEME,
 } from "@/lib/constants";
 
 const TEXT_TYPES = ["LITERARY", "JOURNALISTIC", "DAILY"] as const;
 const LEVELS = ["A2", "B1", "B2", "C1"] as const;
-
-type Subtheme = { theme: string; label: string };
-
-const NEWS_ON_KEY = "versus.anchoredInNews";
-const NEWS_WARNED_KEY = "versus.anchoredInNewsWarned";
 
 export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }) {
   const router = useRouter();
   const [textType, setTextType] = useState<(typeof TEXT_TYPES)[number] | null>(null);
   const [level, setLevel] = useState<(typeof LEVELS)[number] | null>(null);
   const [theme, setTheme] = useState<string | null>(null);
-  const [subtheme, setSubtheme] = useState<Subtheme | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
-  // "Ancrer dans l'actualité" is remembered in this browser: the switch keeps
-  // its last state, and the warning only shows the first time it's turned on.
-  // Read at init: the switch only renders once a theme is picked, so the
-  // server render (no storage) can't mismatch it.
-  const [anchoredInNews, setAnchoredInNews] = useState(() => {
-    try {
-      return typeof window !== "undefined" && localStorage.getItem(NEWS_ON_KEY) === "1";
-    } catch {
-      return false; // Storage unavailable (private mode…): the switch starts off.
-    }
-  });
+  // "Ancrer dans l'actualité" starts off on every visit, and turning it on
+  // always goes through the warning first.
+  const [anchoredInNews, setAnchoredInNews] = useState(false);
   const [newsWarningOpen, setNewsWarningOpen] = useState(false);
-  const subRowRef = useRef<HTMLDivElement>(null);
-
-  function saveAnchoredInNews(on: boolean) {
-    setAnchoredInNews(on);
-    try {
-      localStorage.setItem(NEWS_ON_KEY, on ? "1" : "0");
-      if (on) localStorage.setItem(NEWS_WARNED_KEY, "1");
-    } catch {
-      // Not remembered, but the choice still applies to this exercise.
-    }
-  }
 
   function toggleAnchoredInNews() {
-    if (anchoredInNews) return saveAnchoredInNews(false);
-    let warned = false;
-    try {
-      warned = localStorage.getItem(NEWS_WARNED_KEY) === "1";
-    } catch {}
-    if (warned) saveAnchoredInNews(true);
+    if (anchoredInNews) setAnchoredInNews(false);
     else setNewsWarningOpen(true);
   }
 
   function confirmNewsWarning() {
     setNewsWarningOpen(false);
-    saveAnchoredInNews(true);
+    setAnchoredInNews(true);
   }
 
   if (pending) return <LoadingScreen variant="generate" />;
@@ -78,18 +46,9 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   const themes = theme ? [theme] : [];
 
   // One theme at a time: picking another replaces it, clicking the current
-  // one clears it. Either way the subtheme belonged to the old theme.
+  // one clears it. The subtheme is drawn server-side (lib/ai.ts).
   function toggleTheme(next: string) {
     setTheme((current) => (current === next ? null : next));
-    setSubtheme(null);
-  }
-
-  function toggleSubtheme(theme: string, label: string) {
-    setSubtheme((prev) => (prev && prev.theme === theme && prev.label === label ? null : { theme, label }));
-  }
-
-  function scrollSubRow(dir: 1 | -1) {
-    subRowRef.current?.scrollBy({ left: dir * 200, behavior: "smooth" });
   }
 
   async function handleSubmit() {
@@ -104,8 +63,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           textType,
           level,
           themes,
-          subtheme,
-          anchoredInNews: theme === ANGLOPHONE_THEME && anchoredInNews,
+          anchoredInNews,
         }),
       });
       const data = await res.json();
@@ -199,12 +157,12 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           })}
         </div>
 
-        {theme === ANGLOPHONE_THEME && (
+        {theme && (
           <div className="mt-2 flex items-center justify-between gap-6 rounded-xl border border-border bg-white px-5 py-4">
             <div>
               <div className="text-sm font-semibold text-ink-softer">Ancrer dans l&apos;actualité</div>
               <div className="mt-0.5 text-[12.5px] text-muted-light">
-                Autorise l&apos;actualité récente, les dirigeants en exercice, des chiffres et des dates.
+                Recherche l&apos;actualité sur internet : événements récents, personnalités publiques et dates précises.
               </div>
             </div>
             <button
@@ -228,72 +186,6 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           </div>
         )}
       </div>
-
-      {theme && (
-        <div className="mt-7 flex flex-col gap-3.5 border-t border-border pt-7">
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-sm font-semibold text-ink-softer">
-              Sous-thème <span className="font-normal text-muted-light">(optionnel)</span>
-            </div>
-            <div className="flex items-center gap-3.5">
-              <button
-                type="button"
-                onClick={() => scrollSubRow(-1)}
-                className="cursor-pointer px-1 text-[13px] text-ink-40"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollSubRow(1)}
-                className="cursor-pointer px-1 text-[13px] text-ink-40"
-              >
-                ›
-              </button>
-              {subtheme && (
-                <button
-                  type="button"
-                  title="Aucun sous-thème"
-                  onClick={() => setSubtheme(null)}
-                  className="cursor-pointer text-[13px] text-muted-light"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div
-            ref={subRowRef}
-            className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {(THEME_SUBTOPICS[theme] ?? []).map((label) => {
-              const selected = subtheme?.theme === theme && subtheme?.label === label;
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => toggleSubtheme(theme, label)}
-                  className={
-                    "flex-shrink-0 snap-start cursor-pointer whitespace-nowrap rounded-full px-3.5 py-[7px] text-[13px] font-medium " +
-                    (selected
-                      ? "bg-accent text-white"
-                      : "border border-border-strong bg-white text-ink-40")
-                  }
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {!subtheme && (
-            <div className="text-[12.5px] text-muted-light">
-              Sans sous-thème, le texte restera général.
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="mt-8 flex items-center gap-5">
         {canStartExercise ? (
@@ -346,10 +238,10 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
               Textes ancrés dans l&apos;actualité
             </div>
             <div className="text-sm leading-[1.6] text-muted-light">
-              Le texte pourra mentionner des événements récents, des dirigeants en exercice, des
-              chiffres et des dates. Ils sont générés par une IA, dont les connaissances
-              s&apos;arrêtent à une certaine date : certains faits peuvent être inexacts ou
-              dépassés. Ne les utilisez pas comme source sans les vérifier.
+              Le texte s&apos;appuiera sur une recherche internet : il citera des événements
+              récents, des personnalités publiques et des dates précises. Les sources sont
+              résumées par une IA : certains faits peuvent être mal restitués. Ne les utilisez
+              pas comme source sans les vérifier.
             </div>
             <div className="mt-1.5 flex justify-end gap-3">
               <button

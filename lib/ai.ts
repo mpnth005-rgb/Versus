@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { countWords } from "@/lib/text";
 import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
-import { ANGLOPHONE_THEME, THEME_SUBTOPICS } from "@/lib/constants";
+import { THEME_TREE } from "@/lib/subtopics";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -75,6 +75,64 @@ async function completeWithTool(
   return toolUse.input;
 }
 
+/**
+ * Like completeWithTool, but Claude must first search the web (server-side
+ * web_search tool) and only then call `tool`. The submit tool can't be
+ * forced here — a forced call would skip the search — so tool_choice is
+ * "auto" and the prompt asks for search-then-submit. The search is then
+ * checked, not trusted: a response with no web_search call, or no call to
+ * `tool`, is retried and finally rejected, so "anchored in the news" texts
+ * always come from fresh sources.
+ */
+async function completeWithWebSearch(
+  prompt: string,
+  tool: Tool,
+  maxTokens: number
+): Promise<unknown> {
+  const client = getClient();
+  const MAX_ATTEMPTS = 2;
+  // Long server-side search turns can pause (stop_reason "pause_turn");
+  // they resume by sending the paused turn back.
+  const MAX_CONTINUATIONS = 4;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const messages: Anthropic.MessageParam[] = [{ role: "user", content: prompt }];
+    let searched = false;
+
+    for (let turn = 0; turn <= MAX_CONTINUATIONS; turn++) {
+      const message = await client.messages.create({
+        model: MODEL,
+        max_tokens: maxTokens,
+        messages,
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }, tool],
+        tool_choice: { type: "auto" },
+      });
+
+      searched ||= message.content.some(
+        (block) => block.type === "server_tool_use" && block.name === "web_search"
+      );
+
+      if (message.stop_reason === "max_tokens") {
+        throw new Error(
+          `The model hit the ${maxTokens}-token limit for tool "${tool.name}" before finishing its output. Increase maxTokens for this call.`
+        );
+      }
+      if (message.stop_reason === "pause_turn") {
+        messages.push({ role: "assistant", content: message.content });
+        continue;
+      }
+
+      const toolUse = message.content.find(
+        (block) => block.type === "tool_use" && block.name === tool.name
+      );
+      if (searched && toolUse && toolUse.type === "tool_use") return toolUse.input;
+      break; // No search or no submission: start over.
+    }
+  }
+
+  throw new Error("Web-searched generation failed: no web search or no submitted text.");
+}
+
 // ---------------------------------------------------------------------------
 // Appel 1 — Exercise text generation
 // ---------------------------------------------------------------------------
@@ -108,7 +166,7 @@ const TEXT_TYPE_PROMPTS: Record<string, string> = {
   LITERARY:
     "littéraire (narratif, sensoriel, peut inclure dialogue ou figures de style)",
   JOURNALISTIC:
-    "journalistique/actualité (factuel, structuré, ton neutre, peut simuler un article — pas de fait réel daté ni de personne réelle nommée)",
+    "journalistique/actualité (factuel, structuré, ton neutre, peut simuler un article)",
   DAILY: "quotidien (registre courant, situation de vie ordinaire)",
 };
 
@@ -184,59 +242,52 @@ function pickRandom<T>(items: T[]): T {
 // picker in criteria-form.tsx, so the user can explicitly pick the angle
 // for one theme instead of leaving it to Math.random().
 
-// How much of the real world a text may use. Every theme is fictional
-// except "Civilisation anglophone", where CPGE students need real
-// institutions and history. Even with "Ancrer dans l'actualité" on, quotes
-// and accusations attributed to real people stay forbidden: those would
-// engage Versus itself, which a user-facing warning can't cover.
-function realityRules(params: { themes: string[]; anchoredInNews?: boolean }): string {
-  if (!params.themes.includes(ANGLOPHONE_THEME)) {
-    return "- Ne nomme AUCUNE personne réelle, ne fais référence à AUCUN événement d'actualité réel vérifiable, n'utilise AUCUN personnage ou œuvre sous droit d'auteur.";
-  }
-
-  const alwaysForbidden = `  - N'invente JAMAIS de citation attribuée à une personne réelle (ni directe ni indirecte).
-  - N'attribue à aucune personne réelle d'accusation, de faute ou de jugement moral.
-  - N'utilise aucun personnage ou œuvre sous droit d'auteur.`;
-
+// How much of the real world a text may use, for every theme. By default:
+// real institutions and established history, but no recent news, sitting
+// leaders or precise figures — the model only has its training memory, and
+// those would go stale or be invented. With "Ancrer dans l'actualité" the
+// model must search the web (completeWithWebSearch) and anchor the text in
+// what it found. Quotes and accusations about real people are only ever
+// allowed as reported by those sources: invented ones would engage Versus
+// itself, which a user-facing warning can't cover.
+function realityRules(params: { anchoredInNews?: boolean }, today: string): string {
   if (params.anchoredInNews) {
-    return `- Le texte est ANCRÉ DANS LA RÉALITÉ du monde anglophone (ces règles priment sur toute autre consigne du type de texte concernant le réel) :
-  - Tu peux évoquer l'actualité récente, des dirigeants en exercice, des chiffres et des dates précis, ainsi que des institutions, lieux, lois, faits historiques et figures historiques réels.
-  - N'affirme que des faits que tu connais avec certitude ; en cas de doute sur un chiffre ou une date, reste approximatif plutôt que d'inventer.
-${alwaysForbidden}`;
+    return `- Le texte est ANCRÉ DANS L'ACTUALITÉ (ces règles priment sur toute autre consigne, y compris la consigne de structure, concernant le réel). Date du jour : ${today}.
+  - AVANT d'écrire, fais au moins une recherche web (outil web_search) sur l'actualité récente du thème demandé ; n'appelle submit_exercise qu'ensuite.
+  - OBLIGATOIRE : le texte nomme au moins une ou deux personnalités publiques réelles, s'appuie sur au moins un événement réel récent (semaines ou mois précédant la date du jour) et cite au moins une date précise — tous tirés de tes recherches, pas de ta mémoire.
+  - Les personnalités sont évoquées pour leurs actes et positions publics rapportés par les sources.
+  - Citations : uniquement celles trouvées dans les sources, traduites fidèlement en français ; n'en invente jamais. Accusations ou mises en cause : uniquement si les sources les rapportent, et présentées comme telles (« selon… »), jamais affirmées par le texte lui-même.
+  - Pour un texte littéraire ou quotidien : un ou des personnages fictifs vivent, commentent ou subissent ces faits réels.
+  - Si la consigne de structure évoque une source générique (« un responsable », « un expert »), tu peux la remplacer par une source réelle trouvée.
+  - N'utilise aucun personnage ou œuvre sous droit d'auteur.`;
   }
 
-  return `- Le texte est ANCRÉ DANS LA RÉALITÉ du monde anglophone, avec prudence (ces règles priment sur toute autre consigne du type de texte concernant le réel) :
-  - Autorisé : institutions réelles (Parlement, Cour suprême, NHS, Commonwealth…), lieux, partis politiques, lois et décisions connues, grands faits historiques établis, figures historiques nommées pour ce qu'elles ont fait de notoriété publique.
+  return `- Le texte peut s'appuyer sur le monde réel, avec prudence (ces règles priment sur toute autre consigne du type de texte concernant le réel) :
+  - Autorisé : institutions réelles, lieux, partis politiques, lois et décisions connues, grands faits historiques établis, figures historiques nommées pour ce qu'elles ont fait de notoriété publique.
   - Interdit : l'actualité récente (moins de 3 ans) ou présentée comme « actuelle », les dirigeants en exercice présentés comme tels, les chiffres précis présentés comme exacts (préfère « près de la moitié », « des millions »).
-${alwaysForbidden}`;
+  - N'invente JAMAIS de citation attribuée à une personne réelle, et n'attribue à aucune personne réelle d'accusation, de faute ou de jugement moral.
+  - N'utilise aucun personnage ou œuvre sous droit d'auteur.`;
 }
 
 async function generateExerciseTextOnce(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
-  subtheme?: { theme: string; label: string } | null;
   anchoredInNews?: boolean;
 }): Promise<GeneratedExercise> {
   const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
+  const today = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "Europe/Paris" }).format(new Date());
 
-  // A user-picked subtheme (from the criteria form's sub-theme selector)
-  // always wins over the random spotlight — it targets whichever theme the
-  // user chose it for, not necessarily the first one in the array.
-  const explicitSubtheme =
-    params.subtheme && params.themes.includes(params.subtheme.theme) ? params.subtheme : null;
-  const spotlightIndex = explicitSubtheme
-    ? params.themes.indexOf(explicitSubtheme.theme)
-    : params.themes.length > 0
-      ? Math.floor(Math.random() * params.themes.length)
-      : -1;
+  // The learner only picks the theme: a subtheme and one of its angles are
+  // drawn here, server-side, for every generation (lib/subtopics.ts), so
+  // texts on the same theme rarely repeat.
   const themeAngles = params.themes
-    .map((theme, i) => {
-      if (i !== spotlightIndex) return theme;
-      if (explicitSubtheme) return `${theme} (angle : ${explicitSubtheme.label})`;
-      const subtopics = THEME_SUBTOPICS[theme];
-      return subtopics ? `${theme} (angle : ${pickRandom(subtopics)})` : theme;
+    .map((theme) => {
+      const subthemes = THEME_TREE[theme];
+      if (!subthemes) return theme;
+      const subtheme = pickRandom(Object.keys(subthemes));
+      return `${theme} (angle : ${subtheme} — ${pickRandom(subthemes[subtheme])})`;
     })
     .join(", ");
 
@@ -252,14 +303,16 @@ Génère un texte ORIGINAL en français répondant à ces critères :
 - Longueur cible : environ ${targetWordCount} mots (strictement entre 130 et 170 dans tous les cas).
 - Adapte le lexique, la longueur des phrases et la complexité syntaxique au niveau CECRL demandé.
 - Intègre organiquement les thèmes demandés sans les lister artificiellement.
-${realityRules(params)}
+${realityRules(params, today)}
 - Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) : ${angle}
 - Ne réutilise jamais un titre, un nom de personnage ou une accroche déjà vus.
 - Le texte doit constituer un exercice de traduction intéressant : varie les temps verbaux, inclus au moins une expression idiomatique ou tournure non triviale adaptée au niveau, évite les phrases trop plates.
 
 Appelle l'outil submit_exercise avec le résultat.`;
 
-  const result = await completeWithTool(prompt, generateExerciseTool, 1500);
+  const result = params.anchoredInNews
+    ? await completeWithWebSearch(prompt, generateExerciseTool, 4000)
+    : await completeWithTool(prompt, generateExerciseTool, 1500);
   return generatedExerciseSchema.parse(result);
 }
 
@@ -269,7 +322,6 @@ export async function generateExerciseText(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
-  subtheme?: { theme: string; label: string } | null;
   anchoredInNews?: boolean;
 }): Promise<GeneratedExercise> {
   const MAX_ATTEMPTS = 3;
