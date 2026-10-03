@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
+import { getRecentTitles } from "@/lib/progress";
 import { MAX_THEMES, THEME_OPTIONS } from "@/lib/constants";
 
 const bodySchema = z.object({
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
   try {
     // The subtheme is no longer picked by the learner: lib/ai.ts draws one
     // (and an angle within it) for every generation.
-    const generated = await generateExerciseText({ ...parsed.data, anchoredInNews });
+    const recentTitles = await getRecentTitles(session.user.id);
+    const generated = await generateExerciseText({ ...parsed.data, anchoredInNews, recentTitles });
     const exercise = await prisma.exercise.create({
       data: {
         userId: session.user.id,

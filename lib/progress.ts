@@ -47,3 +47,15 @@ export async function getHistory(userId: string) {
     createdAt: e.createdAt,
   }));
 }
+
+/** Titles of the user's latest exercises, newest first — passed to text
+ * generation so a new text doesn't reuse a title or opening. */
+export async function getRecentTitles(userId: string, limit = 15): Promise<string[]> {
+  const exercises = await prisma.exercise.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { title: true },
+  });
+  return exercises.map((e) => e.title);
+}

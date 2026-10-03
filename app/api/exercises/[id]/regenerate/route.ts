@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
+import { getRecentTitles } from "@/lib/progress";
 
 export async function POST(
   _req: Request,
@@ -34,6 +35,7 @@ export async function POST(
       level: exercise.level,
       themes: Array.isArray(exercise.themes) ? (exercise.themes as string[]) : [],
       anchoredInNews: exercise.anchoredInNews,
+      recentTitles: await getRecentTitles(session.user.id),
     });
 
     await prisma.$transaction([

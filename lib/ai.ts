@@ -5,6 +5,7 @@ import { z } from "zod";
 import { countWords } from "@/lib/text";
 import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
 import { THEME_TREE } from "@/lib/subtopics";
+import { FIRST_NAMES, LAST_NAMES } from "@/lib/names";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -273,6 +274,8 @@ async function generateExerciseTextOnce(params: {
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
   anchoredInNews?: boolean;
+  // Titles of the user's latest texts, so the new one doesn't repeat them.
+  recentTitles?: string[];
 }): Promise<GeneratedExercise> {
   const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
@@ -290,6 +293,12 @@ async function generateExerciseTextOnce(params: {
     })
     .join(", ");
 
+  // Fictional characters' names are drawn here too (lib/names.ts): left to
+  // itself the model keeps picking the same few names.
+  const firstNames = [...FIRST_NAMES].sort(() => Math.random() - 0.5).slice(0, 3);
+  const lastName = pickRandom(LAST_NAMES);
+  const recentTitles = (params.recentTitles ?? []).filter(Boolean);
+
   const prompt = `Tu es un générateur de textes pour une plateforme d'entraînement à la traduction FR → EN nommée Versus.
 
 Tu reçois trois critères choisis par l'utilisateur : un type de texte, un niveau de langue (échelle CECRL), et une liste de thèmes.
@@ -304,7 +313,11 @@ Génère un texte ORIGINAL en français répondant à ces critères :
 - Intègre organiquement les thèmes demandés sans les lister artificiellement.
 ${realityRules(params, today)}
 - Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) : ${angle}
-- Ne réutilise jamais un titre, un nom de personnage ou une accroche déjà vus.
+- Personnages : le texte n'a PAS besoin de personnages ; n'en crée que si le sujet et la consigne de structure s'y prêtent naturellement. Si tu nommes un personnage fictif, prends son prénom dans cette liste, dans l'ordre (${firstNames.join(", ")}), sans en inventer d'autre. Un prénom suffit en général ; n'ajoute le nom de famille « ${lastName} » que si le contexte l'exige vraiment (cadre formel, article de presse).${
+    recentTitles.length > 0
+      ? `\n- Titres des derniers textes de cet utilisateur — n'en reprends aucun, ni un titre proche :${recentTitles.map((t) => `« ${t} »`).join(", ")}.`
+      : ""
+  }
 - Le texte doit constituer un exercice de traduction intéressant : varie les temps verbaux, inclus au moins une expression idiomatique ou tournure non triviale adaptée au niveau, évite les phrases trop plates.
 
 Appelle l'outil submit_exercise avec le résultat.`;
@@ -322,6 +335,8 @@ export async function generateExerciseText(params: {
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
   anchoredInNews?: boolean;
+  // Titles of the user's latest texts, so the new one doesn't repeat them.
+  recentTitles?: string[];
 }): Promise<GeneratedExercise> {
   const MAX_ATTEMPTS = 3;
   let last: GeneratedExercise | null = null;
