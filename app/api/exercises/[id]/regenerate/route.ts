@@ -34,6 +34,7 @@ export async function POST(
       level: exercise.level,
       themes: Array.isArray(exercise.themes) ? (exercise.themes as string[]) : [],
       subtheme: exercise.subtheme as { theme: string; label: string } | null,
+      anchoredInNews: exercise.anchoredInNews,
     });
 
     await prisma.$transaction([

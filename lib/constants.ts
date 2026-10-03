@@ -16,12 +16,12 @@ export const LEVEL_LABELS: Record<string, string> = {
 };
 
 export const THEME_OPTIONS = [
-  "Science",
+  "Science et nouvelle technologie",
   "Environnement",
   "Politique",
   "Économie",
   "Société",
-  "Culture",
+  "Civilisation anglophone",
 ] as const;
 
 export const MAX_THEMES = 1;
@@ -30,7 +30,7 @@ export const MAX_THEMES = 1;
 // generation prompt (lib/ai.ts) — one source of truth so the UI only ever
 // offers subthemes the server actually knows how to use.
 export const THEME_SUBTOPICS: Record<string, string[]> = {
-  Science: [
+  "Science et nouvelle technologie": [
     "Astronomie et espace",
     "Physique quantique",
     "Biologie et génétique",
@@ -90,17 +90,17 @@ export const THEME_SUBTOPICS: Record<string, string[]> = {
     "Vieillissement de la population",
     "Justice et criminalité",
   ],
-  Culture: [
-    "Cinéma et séries",
-    "Littérature et édition",
-    "Musique",
-    "Arts plastiques et expositions",
-    "Théâtre et spectacle vivant",
-    "Patrimoine et monuments",
-    "Jeux vidéo",
-    "Mode et design",
-    "Gastronomie",
-    "Photographie",
+  "Civilisation anglophone": [
+    "Institutions britanniques",
+    "Brexit et ses conséquences",
+    "Unité du Royaume-Uni",
+    "Système politique américain",
+    "Élections et polarisation aux États-Unis",
+    "Questions raciales et droits civiques",
+    "Débats de société américains",
+    "Santé et protection sociale",
+    "Immigration et multiculturalisme",
+    "Le monde anglophone et l'héritage de l'Empire",
   ],
 };
 
@@ -115,3 +115,8 @@ export const NAV_ITEMS = [
 export function currentYearMonth(date = new Date()): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
+
+// The only theme that may be anchored in real-world facts (CPGE
+// "civilisation" needs real institutions and history); every other theme
+// stays fictional. See realityRules() in lib/ai.ts.
+export const ANGLOPHONE_THEME = "Civilisation anglophone";

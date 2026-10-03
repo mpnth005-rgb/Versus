@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
-import { MAX_THEMES, THEME_OPTIONS, THEME_SUBTOPICS } from "@/lib/constants";
+import { ANGLOPHONE_THEME, MAX_THEMES, THEME_OPTIONS, THEME_SUBTOPICS } from "@/lib/constants";
 
 const bodySchema = z.object({
   textType: z.enum(["LITERARY", "JOURNALISTIC", "DAILY"]),
@@ -16,6 +16,7 @@ const bodySchema = z.object({
     .object({ theme: z.enum(THEME_OPTIONS), label: z.string() })
     .nullable()
     .optional(),
+  anchoredInNews: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -47,8 +48,12 @@ export async function POST(req: NextRequest) {
       ? parsed.data.subtheme
       : null;
 
+  // "Ancrer dans l'actualité" only exists for Civilisation anglophone.
+  const anchoredInNews =
+    parsed.data.anchoredInNews === true && parsed.data.themes.includes(ANGLOPHONE_THEME);
+
   try {
-    const generated = await generateExerciseText({ ...parsed.data, subtheme });
+    const generated = await generateExerciseText({ ...parsed.data, subtheme, anchoredInNews });
     const exercise = await prisma.exercise.create({
       data: {
         userId: session.user.id,
@@ -59,6 +64,7 @@ export async function POST(req: NextRequest) {
         // Nullable Json columns need Prisma.DbNull, not a plain `null`,
         // to actually store SQL NULL rather than a JSON "null" literal.
         subtheme: subtheme ?? Prisma.DbNull,
+        anchoredInNews,
         sourceText: generated.sourceText,
         wordCount: generated.wordCount,
         status: "READY",

@@ -36,6 +36,7 @@ export default async function EditorPage({
         subtheme: exercise.subtheme as { theme: string; label: string } | null,
         sourceText: exercise.sourceText,
         wordCount: exercise.wordCount,
+        anchoredInNews: exercise.anchoredInNews,
       }}
       canRegenerate={quota.canStartExercise}
     />

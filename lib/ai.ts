@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { countWords } from "@/lib/text";
 import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
-import { THEME_SUBTOPICS } from "@/lib/constants";
+import { ANGLOPHONE_THEME, THEME_SUBTOPICS } from "@/lib/constants";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -184,11 +184,39 @@ function pickRandom<T>(items: T[]): T {
 // picker in criteria-form.tsx, so the user can explicitly pick the angle
 // for one theme instead of leaving it to Math.random().
 
+// How much of the real world a text may use. Every theme is fictional
+// except "Civilisation anglophone", where CPGE students need real
+// institutions and history. Even with "Ancrer dans l'actualité" on, quotes
+// and accusations attributed to real people stay forbidden: those would
+// engage Versus itself, which a user-facing warning can't cover.
+function realityRules(params: { themes: string[]; anchoredInNews?: boolean }): string {
+  if (!params.themes.includes(ANGLOPHONE_THEME)) {
+    return "- Ne nomme AUCUNE personne réelle, ne fais référence à AUCUN événement d'actualité réel vérifiable, n'utilise AUCUN personnage ou œuvre sous droit d'auteur.";
+  }
+
+  const alwaysForbidden = `  - N'invente JAMAIS de citation attribuée à une personne réelle (ni directe ni indirecte).
+  - N'attribue à aucune personne réelle d'accusation, de faute ou de jugement moral.
+  - N'utilise aucun personnage ou œuvre sous droit d'auteur.`;
+
+  if (params.anchoredInNews) {
+    return `- Le texte est ANCRÉ DANS LA RÉALITÉ du monde anglophone (ces règles priment sur toute autre consigne du type de texte concernant le réel) :
+  - Tu peux évoquer l'actualité récente, des dirigeants en exercice, des chiffres et des dates précis, ainsi que des institutions, lieux, lois, faits historiques et figures historiques réels.
+  - N'affirme que des faits que tu connais avec certitude ; en cas de doute sur un chiffre ou une date, reste approximatif plutôt que d'inventer.
+${alwaysForbidden}`;
+  }
+
+  return `- Le texte est ANCRÉ DANS LA RÉALITÉ du monde anglophone, avec prudence (ces règles priment sur toute autre consigne du type de texte concernant le réel) :
+  - Autorisé : institutions réelles (Parlement, Cour suprême, NHS, Commonwealth…), lieux, partis politiques, lois et décisions connues, grands faits historiques établis, figures historiques nommées pour ce qu'elles ont fait de notoriété publique.
+  - Interdit : l'actualité récente (moins de 3 ans) ou présentée comme « actuelle », les dirigeants en exercice présentés comme tels, les chiffres précis présentés comme exacts (préfère « près de la moitié », « des millions »).
+${alwaysForbidden}`;
+}
+
 async function generateExerciseTextOnce(params: {
   textType: "LITERARY" | "JOURNALISTIC" | "DAILY";
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
   subtheme?: { theme: string; label: string } | null;
+  anchoredInNews?: boolean;
 }): Promise<GeneratedExercise> {
   const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
@@ -224,7 +252,7 @@ Génère un texte ORIGINAL en français répondant à ces critères :
 - Longueur cible : environ ${targetWordCount} mots (strictement entre 130 et 170 dans tous les cas).
 - Adapte le lexique, la longueur des phrases et la complexité syntaxique au niveau CECRL demandé.
 - Intègre organiquement les thèmes demandés sans les lister artificiellement.
-- Ne nomme AUCUNE personne réelle, ne fais référence à AUCUN événement d'actualité réel vérifiable, n'utilise AUCUN personnage ou œuvre sous droit d'auteur.
+${realityRules(params)}
 - Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) : ${angle}
 - Ne réutilise jamais un titre, un nom de personnage ou une accroche déjà vus.
 - Le texte doit constituer un exercice de traduction intéressant : varie les temps verbaux, inclus au moins une expression idiomatique ou tournure non triviale adaptée au niveau, évite les phrases trop plates.
@@ -242,6 +270,7 @@ export async function generateExerciseText(params: {
   level: "A2" | "B1" | "B2" | "C1";
   themes: string[];
   subtheme?: { theme: string; label: string } | null;
+  anchoredInNews?: boolean;
 }): Promise<GeneratedExercise> {
   const MAX_ATTEMPTS = 3;
   let last: GeneratedExercise | null = null;

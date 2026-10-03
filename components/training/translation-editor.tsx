@@ -17,6 +17,7 @@ export type EditorExercise = {
   subtheme: { theme: string; label: string } | null;
   sourceText: string;
   wordCount: number;
+  anchoredInNews: boolean;
 };
 
 function wordCount(text: string): number {
@@ -72,6 +73,7 @@ export function TranslationEditor({
           subtheme: refreshed.subtheme,
           sourceText: refreshed.sourceText,
           wordCount: refreshed.wordCount,
+          anchoredInNews: refreshed.anchoredInNews,
         });
         setTranslation("");
       }
@@ -116,6 +118,12 @@ export function TranslationEditor({
           {exercise.themes.length > 0 && (
             <span className="rounded-full bg-paper-alt-2 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-40">
               {themesLabel}
+            </span>
+          )}
+          {exercise.anchoredInNews && (
+            <span className="flex items-center gap-1.5 rounded-full border border-[oklch(0.85_0.07_70)] bg-[oklch(0.96_0.04_75)] px-3.5 py-1.5 text-[12.5px] font-medium text-[oklch(0.5_0.12_55)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.68_0.15_60)]" />
+              Ancré dans l&apos;actualité
             </span>
           )}
         </div>
