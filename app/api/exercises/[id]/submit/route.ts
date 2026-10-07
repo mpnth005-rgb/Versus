@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai";
 import { computeScores, type ErrorType } from "@/lib/scoring";
 import { countWords } from "@/lib/text";
+import { progressResponse, scaledProgress } from "@/lib/progress-stream";
 
 const bodySchema = z.object({
   translation: z.string().min(1),
@@ -43,73 +44,82 @@ export async function POST(
     );
   }
 
-  try {
-    // Appel 2, then Appel 3 (see lib/ai.ts) — the reference translation is
-    // generated fresh at submission time rather than cached at exercise
-    // creation, so exercises abandoned before submission never cost that
-    // call.
-    const reference = await generateReferenceTranslation(exercise.sourceText);
-    const classification = await classifyTranslation({
-      sourceText: exercise.sourceText,
-      reference,
-      userTranslation: parsed.data.translation,
-    });
+  const translation = parsed.data.translation;
 
-    // Scoring is always computed here, deterministically, from the fixed
-    // penalty table — never trusted to the model. See lib/scoring.ts.
-    // Each flagged sentence keeps its reference counterpart so the
-    // correction page can highlight it inside the full reference text.
-    const sentenceCorrections = classification.flaggedSentences.map((s) => ({
-      ...s,
-      referenceSentence:
-        reference.phrases.find((p) => p.numero === s.sentenceNumber)?.phraseTraduite ?? null,
-    }));
+  // From here on, the loading screen's bar follows both AI calls as they are
+  // written (lib/progress-stream.ts): the reference translation, then the
+  // longer error classification.
+  return progressResponse(async (report) => {
+    report(0.02);
+    try {
+      // Appel 2, then Appel 3 (see lib/ai.ts) — the reference translation is
+      // generated fresh at submission time rather than cached at exercise
+      // creation, so exercises abandoned before submission never cost that
+      // call.
+      const reference = await generateReferenceTranslation(
+        exercise.sourceText,
+        scaledProgress(report, 0.02, 0.38)
+      );
+      const classification = await classifyTranslation({
+        sourceText: exercise.sourceText,
+        reference,
+        userTranslation: translation,
+        onProgress: scaledProgress(report, 0.38, 0.97),
+      });
 
-    const errorTypes: ErrorType[] = classification.flaggedSentences.flatMap((s) =>
-      s.errors.map((e) => e.type)
-    );
-    const { overallScore, adjustedScore } = computeScores(errorTypes, exercise.level);
+      // Scoring is always computed here, deterministically, from the fixed
+      // penalty table — never trusted to the model. See lib/scoring.ts.
+      // Every sentence (correct ones included) keeps its reference counterpart
+      // so the correction page can highlight it inside the full reference text.
+      const sentenceCorrections = classification.sentences.map((s) => ({
+        ...s,
+        referenceSentence:
+          reference.phrases.find((p) => p.numero === s.sentenceNumber)?.phraseTraduite ?? null,
+      }));
 
-    await prisma.$transaction([
-      prisma.translation.upsert({
-        where: { exerciseId: id },
-        update: { content: parsed.data.translation, wordCount: translationWordCount },
-        create: {
-          exerciseId: id,
-          content: parsed.data.translation,
-          wordCount: translationWordCount,
-        },
-      }),
-      prisma.correction.upsert({
-        where: { exerciseId: id },
-        update: {
-          overallScore,
-          adjustedScore,
-          referenceTranslation: reference.traductionComplete,
-          sentenceCorrections,
-          suggestedCards: classification.suggestedCards,
-        },
-        create: {
-          exerciseId: id,
-          overallScore,
-          adjustedScore,
-          referenceTranslation: reference.traductionComplete,
-          sentenceCorrections,
-          suggestedCards: classification.suggestedCards,
-        },
-      }),
-      prisma.exercise.update({ where: { id }, data: { status: "CORRECTED" } }),
-    ]);
+      const errorTypes: ErrorType[] = classification.sentences.flatMap((s) =>
+        s.errors.map((e) => e.type)
+      );
+      const { overallScore, adjustedScore } = computeScores(errorTypes, exercise.level);
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    if (error instanceof AiNotConfiguredError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
+      await prisma.$transaction([
+        prisma.translation.upsert({
+          where: { exerciseId: id },
+          update: { content: translation, wordCount: translationWordCount },
+          create: {
+            exerciseId: id,
+            content: translation,
+            wordCount: translationWordCount,
+          },
+        }),
+        prisma.correction.upsert({
+          where: { exerciseId: id },
+          update: {
+            overallScore,
+            adjustedScore,
+            referenceTranslation: reference.traductionComplete,
+            sentenceCorrections,
+            suggestedCards: classification.suggestedCards,
+          },
+          create: {
+            exerciseId: id,
+            overallScore,
+            adjustedScore,
+            referenceTranslation: reference.traductionComplete,
+            sentenceCorrections,
+            suggestedCards: classification.suggestedCards,
+          },
+        }),
+        prisma.exercise.update({ where: { id }, data: { status: "CORRECTED" } }),
+      ]);
+
+      return { status: 200, body: { ok: true } };
+    } catch (error) {
+      if (error instanceof AiNotConfiguredError) {
+        return { status: 503, body: { error: error.message } };
+      }
+      console.error("translation correction error", error);
+      return { status: 500, body: { error: "La correction a échoué. Réessayez." } };
     }
-    console.error("translation correction error", error);
-    return NextResponse.json(
-      { error: "La correction a échoué. Réessayez." },
-      { status: 500 }
-    );
-  }
+  });
 }

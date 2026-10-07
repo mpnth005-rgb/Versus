@@ -42,7 +42,7 @@ export default async function AccountPage() {
           >
             <button
               type="submit"
-              className="cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
+              className="press-secondary cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
             >
               Se déconnecter
             </button>

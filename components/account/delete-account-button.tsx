@@ -27,7 +27,7 @@ export function DeleteAccountButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="cursor-pointer whitespace-nowrap rounded-lg border border-[oklch(0.6_0.15_25)] px-5 py-[11px] text-[13.5px] font-semibold text-[oklch(0.45_0.15_25)]"
+        className="press-chip cursor-pointer whitespace-nowrap rounded-lg border border-[oklch(0.6_0.15_25)] px-5 py-[11px] text-[13.5px] font-semibold text-[oklch(0.45_0.15_25)]"
       >
         Supprimer le compte
       </button>

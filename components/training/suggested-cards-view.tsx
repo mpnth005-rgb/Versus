@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { LockIcon } from "@/components/lock-icon";
@@ -82,14 +83,16 @@ export function SuggestedCardsView({
   }
 
   return (
-    <div className="flex max-w-[760px] flex-col gap-8 py-14 px-16">
+    <div className="flex flex-col gap-8 py-14 px-16">
       <div>
+        <Link
+          href={`/training/${exerciseId}/correction`}
+          className="press-link mb-3.5 inline-block text-[13px] font-medium text-ink-40"
+        >
+          ← Retour à la correction
+        </Link>
         <div className="font-serif text-[30px] font-semibold leading-[1.15] text-ink">
           Cartes suggérées pour votre deck
-        </div>
-        <div className="mt-2.5 text-[13.5px] text-muted-light">
-          Sélectionnez les phrases à ajouter à votre deck de révision. Vous pouvez
-          rafraîchir une suggestion si elle ne vous convient pas.
         </div>
       </div>
 
@@ -127,7 +130,7 @@ export function SuggestedCardsView({
                   <button
                     type="button"
                     onClick={() => toggle(index)}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg bg-[oklch(0.4_0.11_200)] px-4.5 py-2.5 text-[13px] font-semibold text-white"
+                    className="press-teal flex cursor-pointer items-center gap-2 rounded-lg bg-[oklch(0.4_0.11_200)] px-4.5 py-2.5 text-[13px] font-semibold text-white"
                   >
                     <span className="text-sm">✓</span>Ajouté au deck
                   </button>
@@ -137,7 +140,7 @@ export function SuggestedCardsView({
                     type="button"
                     onClick={() => setUpsellOpen(true)}
                     title="Réservé à Versus Upper"
-                    className="flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-4.5 py-2.5 text-[13px] font-semibold text-muted-lighter"
+                    className="press-locked flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-4.5 py-2.5 text-[13px] font-semibold text-muted-lighter"
                   >
                     <LockIcon />
                     Ajouter au deck
@@ -146,7 +149,7 @@ export function SuggestedCardsView({
                   <button
                     type="button"
                     onClick={() => toggle(index)}
-                    className="cursor-pointer rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white"
+                    className="press-primary cursor-pointer rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white"
                   >
                     Ajouter au deck
                   </button>
@@ -155,9 +158,16 @@ export function SuggestedCardsView({
                   type="button"
                   onClick={() => refresh(index)}
                   disabled={isRefreshing}
-                  className="ml-auto cursor-pointer text-[12.5px] font-medium text-muted-light"
+                  // Same look as "Générer un nouveau texte" on the exercise page.
+                  className="press-accent-link ml-auto flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-accent disabled:opacity-60"
                 >
-                  {isRefreshing ? "Rafraîchissement…" : "Rafraîchir la phrase ↻"}
+                  <span
+                    className={
+                      "h-4 w-4 rounded-full border-2 border-accent border-t-transparent " +
+                      (isRefreshing ? "animate-spin" : "")
+                    }
+                  />
+                  Générer une nouvelle phrase
                 </button>
               </div>
             </div>
@@ -167,15 +177,16 @@ export function SuggestedCardsView({
 
       <div className="flex items-center justify-between border-t border-border pt-2">
         <div className="text-[12.5px] text-muted-light">
-          {selected.size} carte{selected.size === 1 ? "" : "s"} sera
-          {selected.size === 1 ? "" : "ont"} ajoutée{selected.size === 1 ? "" : "s"} à votre
-          deck (max. {Number.isFinite(maxCards) ? maxCards : "illimité"} par exercice)
+          {selected.size} carte{selected.size === 1 ? "" : "s"}{" "}
+          {selected.size === 1 ? "sera ajoutée" : "seront ajoutées"} à votre deck
+          {/* The cap only exists on the free plan. */}
+          {Number.isFinite(maxCards) && ` (max. ${maxCards} par exercice)`}
         </div>
         <button
           type="button"
           onClick={confirm}
           disabled={confirming}
-          className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
+          className="press-primary cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
         >
           Confirmer l&apos;ajout au deck
         </button>

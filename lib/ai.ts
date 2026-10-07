@@ -1,11 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
+import type { MessageStream } from "@anthropic-ai/sdk/lib/MessageStream";
 import { z } from "zod";
 
 import { countWords } from "@/lib/text";
 import { ERROR_TYPES, ERROR_TYPE_LABELS, normalizeErrorType, type ErrorType } from "@/lib/scoring";
 import { THEME_TREE } from "@/lib/subtopics";
 import { FIRST_NAMES, LAST_NAMES } from "@/lib/names";
+import { scaledProgress, type ReportProgress } from "@/lib/progress-stream";
 
 // 4 calls, matching "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
@@ -19,6 +21,22 @@ import { FIRST_NAMES, LAST_NAMES } from "@/lib/names";
 //                                  corrupts scores silently).
 //   4. suggestReplacementCard    — one decontextualized practice sentence
 //                                  for a single error type.
+
+/**
+ * The model occasionally writes an array field of a tool call as a JSON
+ * string ("[{...}]") instead of an array; it's decoded here rather than
+ * failing the whole call.
+ */
+function lenientArray<T extends z.ZodType>(array: T) {
+  return z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }, array);
+}
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
@@ -38,6 +56,44 @@ function getClient(): Anthropic {
 }
 
 /**
+ * Progress of a call = how much of the tool's JSON input has been written,
+ * against the size expected for it (each caller estimates that size from
+ * its own inputs: word count, number of sentences…).
+ */
+type WritingProgress = { report: ReportProgress; expectedChars: number };
+
+/** Linear up to 85 %, then easing towards 98 % — so a longer-than-expected
+ * output slows the bar down instead of pinning it full before the end. */
+function writingCurve(ratio: number): number {
+  if (ratio <= 0.85) return ratio;
+  return 0.85 + 0.13 * (1 - Math.exp(-(ratio - 0.85) / 0.25));
+}
+
+function trackWriting(
+  stream: Pick<MessageStream, "on">,
+  toolName: string,
+  { report, expectedChars }: WritingProgress,
+  onSearch?: () => void
+) {
+  let written = 0;
+  let writingIndex: number | null = null;
+  stream.on("streamEvent", (event) => {
+    if (event.type === "content_block_start") {
+      const block = event.content_block;
+      if (block.type === "tool_use" && block.name === toolName) writingIndex = event.index;
+      if (block.type === "server_tool_use" && block.name === "web_search") onSearch?.();
+    } else if (
+      event.type === "content_block_delta" &&
+      event.index === writingIndex &&
+      event.delta.type === "input_json_delta"
+    ) {
+      written += event.delta.partial_json.length;
+      report(writingCurve(written / expectedChars));
+    }
+  });
+}
+
+/**
  * Calls Claude with a single forced tool call and returns the tool's
  * structured input directly. Claude's tool-use path generates
  * schema-constrained JSON server-side, so there's no free-text JSON to
@@ -52,16 +108,19 @@ function getClient(): Anthropic {
 async function completeWithTool(
   prompt: string,
   tool: Tool,
-  maxTokens: number
+  maxTokens: number,
+  progress?: WritingProgress
 ): Promise<unknown> {
   const client = getClient();
-  const message = await client.messages.create({
+  const stream = client.messages.stream({
     model: MODEL,
     max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
     tools: [tool],
     tool_choice: { type: "tool", name: tool.name },
   });
+  if (progress) trackWriting(stream, tool.name, progress);
+  const message = await stream.finalMessage();
 
   if (message.stop_reason === "max_tokens") {
     throw new Error(
@@ -88,8 +147,23 @@ async function completeWithTool(
 async function completeWithWebSearch(
   prompt: string,
   tool: Tool,
-  maxTokens: number
+  maxTokens: number,
+  progress?: WritingProgress
 ): Promise<unknown> {
+  // The search can't be measured, only counted: each of the (at most 5)
+  // searches moves the bar through the first half; writing fills the rest.
+  const MAX_SEARCHES = 5;
+  let searches = 0;
+  const searchReport = scaledProgress(progress?.report, 0, 0.5);
+  const writing = progress && {
+    report: scaledProgress(progress.report, 0.5, 1),
+    expectedChars: progress.expectedChars,
+  };
+  const onSearch = () => {
+    searches = Math.min(MAX_SEARCHES, searches + 1);
+    searchReport(searches / MAX_SEARCHES);
+  };
+
   const client = getClient();
   const MAX_ATTEMPTS = 2;
   // Long server-side search turns can pause (stop_reason "pause_turn");
@@ -101,13 +175,15 @@ async function completeWithWebSearch(
     let searched = false;
 
     for (let turn = 0; turn <= MAX_CONTINUATIONS; turn++) {
-      const message = await client.messages.create({
+      const stream = client.messages.stream({
         model: MODEL,
         max_tokens: maxTokens,
         messages,
-        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }, tool],
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: MAX_SEARCHES }, tool],
         tool_choice: { type: "auto" },
       });
+      if (writing) trackWriting(stream, tool.name, writing, onSearch);
+      const message = await stream.finalMessage();
 
       searched ||= message.content.some(
         (block) => block.type === "server_tool_use" && block.name === "web_search"
@@ -185,63 +261,110 @@ const LEVEL_WRITING_GUIDANCE: Record<string, string> = {
 // near-deterministic decoding. Instead we pick a genuinely different
 // constraint server-side (Math.random(), not the model) for every call,
 // so the actual prompt text — not just an instruction — differs each time.
-// Split by textType rather than one shared list: several angles are
-// flatly incompatible with a given type (e.g. internal-POV/first-person
-// narration or an ironic tone contradict JOURNALISTIC's required
-// "ton neutre, factuel" — see TEXT_TYPE_PROMPTS above).
-const NARRATIVE_ANGLES: Record<"LITERARY" | "JOURNALISTIC" | "DAILY", string[]> = {
-  LITERARY: [
-    "Commence par un dialogue direct entre deux personnages, sans phrase d'introduction.",
-    "Ouvre sur une description sensorielle précise (un son, une odeur, une texture) avant d'introduire l'action.",
-    "Structure le texte autour d'un objet ou détail concret qui revient à la fin.",
-    "Adopte une focalisation interne : raconte depuis les pensées d'un seul personnage ou d'une seule voix.",
-    "Introduis un basculement net à mi-texte (changement de ton, de rythme ou de situation).",
-    "Termine sur une chute ou une question ouverte plutôt que sur une conclusion fermée.",
-    "Construis autour d'une comparaison ou d'une image qui traverse tout le texte.",
-    "Adopte un ton légèrement ironique ou distancié sur la situation décrite.",
-    "Alterne deux courts paragraphes contrastés (par exemple avant/après, ou deux points de vue).",
-    "Ancre le texte dans un lieu précis décrit avec des détails concrets dès la première phrase.",
-  ],
-  JOURNALISTIC: [
-    "Ouvre par la réponse immédiate aux questions clés (qui, quoi, où) avant d'en détailler le contexte — technique de la pyramide inversée.",
-    "Commence par une citation courte attribuée à une source générique (\"un responsable\", \"un expert du secteur\"), sans qu'elle soit réelle.",
-    "Ouvre sur un chiffre ou une statistique marquante, puis explique son contexte.",
-    "Présente d'abord la situation actuelle, puis son évolution récente.",
-    "Construis autour d'un contraste factuel entre deux points de vue ou deux groupes concernés.",
-    "Adopte une structure chronologique claire : les faits sont présentés dans l'ordre où ils se sont déroulés.",
-    "Ouvre sur une scène de terrain brève et factuelle (un lieu, un moment précis) avant d'élargir au sujet général.",
-    "Termine sur une implication concrète ou une question qui reste en suspens pour le lecteur.",
-    "Structure le texte autour de trois éléments factuels distincts, présentés successivement.",
-    "Introduis un chiffre ou une donnée qui contredit une idée reçue sur le sujet.",
-  ],
-  DAILY: [
-    "Commence par un détail très concret et banal du quotidien (un objet, une habitude, un moment précis de la journée).",
-    "Ouvre sur un dialogue informel entre deux proches (famille, amis, collègues).",
-    "Raconte une petite routine interrompue par un imprévu mineur.",
-    "Structure le texte autour d'une liste de petites tâches ou d'étapes du quotidien.",
-    "Adresse-toi directement au lecteur (\"tu\") comme dans un conseil ou une anecdote partagée.",
-    "Compare une habitude d'aujourd'hui à celle d'avant (une évolution personnelle ou générationnelle).",
-    "Raconte un petit incident ordinaire (une file d'attente, un retard, un objet perdu) avec un ton léger.",
-    "Termine sur une réflexion pratique ou un constat simple plutôt qu'une morale appuyée.",
-    "Structure le texte comme un court récit d'une journée type, du matin au soir.",
-    "Ouvre sur une remarque ou une question que quelqu'un pose dans une situation banale.",
-  ],
+// Split by textType rather than one shared list: several constraints are
+// flatly incompatible with a given type (e.g. internal-POV narration or an
+// ironic tone contradict JOURNALISTIC's "ton neutre, factuel" — see
+// TEXT_TYPE_PROMPTS above). Each text gets one opening, one construction
+// and one ending, drawn independently: 10 × 5 × 5 = 250 combinations per
+// type from short, clearly distinct lists. Openings get the most entries
+// because the first sentence is what makes texts feel alike; a 130–170-word
+// text only has room for a few distinct constructions and endings.
+type StructureAxes = { opening: string[]; construction: string[]; ending: string[] };
+
+const TEXT_STRUCTURES: Record<"LITERARY" | "JOURNALISTIC" | "DAILY", StructureAxes> = {
+  LITERARY: {
+    opening: [
+      "un dialogue direct entre deux personnages, sans phrase d'introduction",
+      "un détail sensoriel précis (un son, une odeur, une texture)",
+      "un lieu décrit avec des détails concrets dès la première phrase",
+      "une action déjà en cours, au milieu d'un geste ou d'un trajet",
+      "une phrase courte et énigmatique qui intrigue le lecteur",
+      "un souvenir introduit par un repère de temps (« Ce matin-là… », « Il y a des années… »)",
+      "une pensée intérieure d'un personnage, à la première personne",
+      "un portrait rapide d'un personnage par un trait physique ou une manie",
+      "un extrait de lettre, de carnet ou de journal intime",
+      "une question qu'un personnage se pose à lui-même",
+    ],
+    construction: [
+      "focalisation interne : tout est vu à travers un seul personnage",
+      "un basculement net à mi-texte (changement de ton, de rythme ou de situation)",
+      "deux moments contrastés, avant et après",
+      "un objet ou un détail qui revient plusieurs fois et prend du sens",
+      "un retour en arrière qui éclaire la situation présente",
+    ],
+    ending: [
+      "une chute inattendue",
+      "une question laissée ouverte",
+      "une image finale forte, sans commentaire",
+      "un retour à la scène ou à la phrase du début",
+      "une décision ou un geste d'un personnage",
+    ],
+  },
+  JOURNALISTIC: {
+    opening: [
+      "la réponse immédiate aux questions clés (qui, quoi, où, quand) — pyramide inversée",
+      "un chiffre ou une donnée marquante",
+      "une citation : réelle et sourcée si le texte est ancré dans l'actualité, sinon attribuée à une source générique (« un responsable », « une chercheuse »), jamais à une personne réelle",
+      "une scène de terrain brève (un lieu, un moment précis)",
+      "une idée reçue énoncée pour être ensuite nuancée ou contredite",
+      "une question posée au lecteur, qui sert de fil conducteur",
+      "un exemple concret (une personne, une situation) avant d'élargir au sujet général",
+      "un rappel de contexte : ce qui s'est passé juste avant",
+      "une date ou un anniversaire qui sert de point de départ",
+      "un contraste frappant entre deux réalités, en une ou deux phrases",
+    ],
+    construction: [
+      "une chronologie : les faits dans l'ordre où ils se sont déroulés",
+      "deux points de vue opposés présentés tour à tour",
+      "la situation actuelle, puis son évolution récente",
+      "le problème, puis ses causes, puis les solutions envisagées",
+      "du cas particulier au phénomène général",
+    ],
+    ending: [
+      "une conséquence concrète pour le lecteur",
+      "une question qui reste en suspens",
+      "une perspective : la prochaine étape attendue",
+      "la réaction d'un acteur concerné",
+      "un retour à la scène ou à l'exemple du début",
+    ],
+  },
+  DAILY: {
+    opening: [
+      "un détail très concret et banal (un objet, une habitude, un moment de la journée)",
+      "un dialogue informel entre proches",
+      "une remarque ou une question entendue dans une situation banale",
+      "une adresse directe au lecteur (« tu ») comme dans un conseil",
+      "un petit problème pratique à résoudre",
+      "le moment précis d'une journée (réveil, trajet, pause, soirée)",
+      "un message reçu (texto, mot laissé sur la table, courriel)",
+      "une habitude décrite au présent",
+      "un lieu du quotidien (cuisine, bus, supermarché) décrit en une phrase",
+      "une petite confidence ou un aveu léger",
+    ],
+    construction: [
+      "une routine interrompue par un imprévu mineur",
+      "une suite d'étapes ou de petites tâches",
+      "une habitude d'avant comparée à celle d'aujourd'hui",
+      "un petit incident raconté avec un ton léger",
+      "un échange entre deux personnes aux avis différents",
+    ],
+    ending: [
+      "une réflexion pratique ou un constat simple",
+      "une petite leçon tirée, sans morale appuyée",
+      "une touche d'humour",
+      "une résolution pour le lendemain",
+      "une réplique finale d'un des proches",
+    ],
+  },
 };
 
 function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-// Same rationale as NARRATIVE_ANGLES: pushes generation away from the one
-// "default" association a broad theme collapses to under near-deterministic
-// decoding (e.g. "Culture" + littéraire always landing on a library scene).
-// Only one selected theme gets a specific subtopic (see spotlightIndex in
-// generateExerciseTextOnce) — giving every theme its own subtopic when
-// several are selected at once (up to MAX_THEMES) risked forcing
-// incoherent combinations like "physique quantique + laïcité + musique".
-// The list itself lives in lib/constants.ts, shared with the sub-theme
-// picker in criteria-form.tsx, so the user can explicitly pick the angle
-// for one theme instead of leaving it to Math.random().
+// Same rationale as TEXT_STRUCTURES: a broad theme collapses to one
+// "default" association under near-deterministic decoding, so a subtheme
+// and an angle within it are drawn server-side (lib/subtopics.ts).
 
 // How much of the real world a text may use, for every theme. By default:
 // real institutions and established history, but no recent news, sitting
@@ -276,8 +399,12 @@ async function generateExerciseTextOnce(params: {
   anchoredInNews?: boolean;
   // Titles of the user's latest texts, so the new one doesn't repeat them.
   recentTitles?: string[];
+  onProgress?: ReportProgress;
 }): Promise<GeneratedExercise> {
-  const angle = pickRandom(NARRATIVE_ANGLES[params.textType]);
+  const axes = TEXT_STRUCTURES[params.textType];
+  const opening = pickRandom(axes.opening);
+  const construction = pickRandom(axes.construction);
+  const ending = pickRandom(axes.ending);
   const targetWordCount = 135 + Math.floor(Math.random() * 31); // 135–165
   const today = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "Europe/Paris" }).format(new Date());
 
@@ -312,7 +439,10 @@ Génère un texte ORIGINAL en français répondant à ces critères :
 - Adapte le lexique, la longueur des phrases et la complexité syntaxique au niveau CECRL demandé.
 - Intègre organiquement les thèmes demandés sans les lister artificiellement.
 ${realityRules(params, today)}
-- Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) : ${angle}
+- Consigne de structure pour CE texte précisément (ne la mentionne jamais, elle est invisible pour l'utilisateur) — applique-la de façon naturelle ; si deux éléments s'accordent mal, privilégie l'ouverture et la construction :
+  - Ouverture : ${opening}.
+  - Construction : ${construction}.
+  - Fin : ${ending}.
 - Personnages : le texte n'a PAS besoin de personnages ; n'en crée que si le sujet et la consigne de structure s'y prêtent naturellement. Si tu nommes un personnage fictif, prends son prénom dans cette liste, dans l'ordre (${firstNames.join(", ")}), sans en inventer d'autre. Un prénom suffit en général ; n'ajoute le nom de famille « ${lastName} » que si le contexte l'exige vraiment (cadre formel, article de presse).${
     recentTitles.length > 0
       ? `\n- Titres des derniers textes de cet utilisateur — n'en reprends aucun, ni un titre proche :${recentTitles.map((t) => `« ${t} »`).join(", ")}.`
@@ -322,9 +452,14 @@ ${realityRules(params, today)}
 
 Appelle l'outil submit_exercise avec le résultat.`;
 
+  // ~6.5 characters per French word, plus the title and JSON keys.
+  const progress = params.onProgress && {
+    report: params.onProgress,
+    expectedChars: targetWordCount * 6.5 + 80,
+  };
   const result = params.anchoredInNews
-    ? await completeWithWebSearch(prompt, generateExerciseTool, 4000)
-    : await completeWithTool(prompt, generateExerciseTool, 1500);
+    ? await completeWithWebSearch(prompt, generateExerciseTool, 4000, progress)
+    : await completeWithTool(prompt, generateExerciseTool, 1500, progress);
   return generatedExerciseSchema.parse(result);
 }
 
@@ -337,12 +472,22 @@ export async function generateExerciseText(params: {
   anchoredInNews?: boolean;
   // Titles of the user's latest texts, so the new one doesn't repeat them.
   recentTitles?: string[];
+  onProgress?: ReportProgress;
 }): Promise<GeneratedExercise> {
   const MAX_ATTEMPTS = 3;
   let last: GeneratedExercise | null = null;
+  // A retry continues from wherever the bar is, over what's left of it.
+  let reached = 0;
+  const track = (value: number) => {
+    reached = value;
+    params.onProgress?.(value);
+  };
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const generated = await generateExerciseTextOnce(params);
+    const generated = await generateExerciseTextOnce({
+      ...params,
+      onProgress: params.onProgress && scaledProgress(track, reached, 1),
+    });
     const wordCount = countWords(generated.sourceText);
     last = { ...generated, wordCount };
     if (wordCount >= 130 && wordCount <= 170) return last;
@@ -366,7 +511,7 @@ const referenceSentenceSchema = z.object({
 // would otherwise write the whole translation twice, and occasionally
 // skipped that redundant field, failing validation.
 const referenceTranslationSchema = z.object({
-  phrases: z.array(referenceSentenceSchema).min(1),
+  phrases: lenientArray(z.array(referenceSentenceSchema).min(1)),
 });
 
 export type ReferenceTranslation = z.infer<typeof referenceTranslationSchema> & {
@@ -398,7 +543,8 @@ const generateReferenceTool: Tool = {
 };
 
 export async function generateReferenceTranslation(
-  sourceText: string
+  sourceText: string,
+  onProgress?: ReportProgress
 ): Promise<ReferenceTranslation> {
   const prompt = `Tu es un traducteur professionnel FR → EN. Tu reçois un texte source en français.
 
@@ -417,7 +563,15 @@ Découpe ta traduction phrase par phrase, alignée sur le découpage en phrases 
 
 Appelle l'outil submit_reference_translation avec le résultat.`;
 
-  const result = await completeWithTool(prompt, generateReferenceTool, 3000);
+  // Each sentence comes back twice (French source + English translation of
+  // about the same length), plus ~55 characters of JSON per sentence.
+  const sentences = Math.max(1, sourceText.split(/[.!?…]+(?:\s|$)/).filter((x) => x.trim()).length);
+  const result = await completeWithTool(
+    prompt,
+    generateReferenceTool,
+    3000,
+    onProgress && { report: onProgress, expectedChars: sourceText.length * 2 + sentences * 55 }
+  );
   const { phrases } = referenceTranslationSchema.parse(result);
   const ordered = [...phrases].sort((a, b) => a.numero - b.numero);
   return {
@@ -444,7 +598,8 @@ const flaggedSentenceSchema = z.object({
   sentenceNumber: z.number().int().positive(),
   sourceSentence: z.string(),
   userSentence: z.string(),
-  errors: z.array(sentenceErrorSchema).min(1),
+  // Empty for a sentence translated without error.
+  errors: lenientArray(z.array(sentenceErrorSchema)),
 });
 
 const suggestedCardSchema = z.object({
@@ -454,8 +609,10 @@ const suggestedCardSchema = z.object({
 });
 
 const classificationSchema = z.object({
-  flaggedSentences: z.array(flaggedSentenceSchema),
-  suggestedCards: z.array(suggestedCardSchema).max(10),
+  // Every sentence of the text, in order — correct ones included, with no
+  // errors — so the correction page can walk through the whole text.
+  sentences: lenientArray(z.array(flaggedSentenceSchema)),
+  suggestedCards: lenientArray(z.array(suggestedCardSchema).max(10)),
 });
 
 export type FlaggedSentence = z.infer<typeof flaggedSentenceSchema>;
@@ -474,10 +631,10 @@ const classifyTool: Tool = {
   input_schema: {
     type: "object",
     properties: {
-      flaggedSentences: {
+      sentences: {
         type: "array",
         description:
-          "Uniquement les phrases contenant au moins une erreur. Ne pas inclure les phrases correctes.",
+          "TOUTES les phrases du texte, dans l'ordre de la numérotation, y compris celles sans erreur (errors vide).",
         items: {
           type: "object",
           properties: {
@@ -489,6 +646,7 @@ const classifyTool: Tool = {
             },
             errors: {
               type: "array",
+              description: "Les erreurs de la phrase ; tableau vide si la phrase est correcte.",
               items: {
                 type: "object",
                 properties: {
@@ -524,7 +682,7 @@ const classifyTool: Tool = {
         },
       },
     },
-    required: ["flaggedSentences", "suggestedCards"],
+    required: ["sentences", "suggestedCards"],
   },
 };
 
@@ -532,6 +690,7 @@ export async function classifyTranslation(params: {
   sourceText: string;
   reference: ReferenceTranslation;
   userTranslation: string;
+  onProgress?: ReportProgress;
 }): Promise<TranslationClassification> {
   const referenceBlock = params.reference.phrases
     .map((p) => `${p.numero}. FR: ${p.phraseSource}\n   EN (référence): ${p.phraseTraduite}`)
@@ -566,7 +725,7 @@ Compare la traduction utilisateur à la traduction de référence, phrase par ph
 
 IMPORTANT — la traduction de référence est UN exemple valide, pas l'unique bonne réponse. N'attribue AUCUNE erreur du seul fait qu'une phrase s'écarte de la formulation de la référence : si la phrase de l'utilisateur est grammaticalement correcte, fidèle au sens et au registre du texte source, elle ne doit recevoir aucune pénalité, même si elle est formulée très différemment de la référence. Compare chaque phrase au texte source, jamais mot à mot à la référence.
 
-Pour chaque phrase contenant une ou plusieurs erreurs, liste-les avec leur type exact et une explication pédagogique courte (2-3 phrases maximum, ton bienveillant mais précis). Si une phrase ne contient aucune erreur, NE L'INCLUS PAS dans flaggedSentences. N'attribue JAMAIS de score ni de pénalité chiffrée — cela sera calculé automatiquement à partir des types que tu identifies.
+Pour CHAQUE phrase du texte, dans l'ordre de la numérotation (aucune ne doit manquer), donne la portion correspondante de la traduction de l'utilisateur et la liste de ses erreurs, chacune avec son type exact et une explication pédagogique courte (2-3 phrases maximum, ton bienveillant mais précis). Si une phrase ne contient aucune erreur, inclus-la quand même avec une liste d'erreurs vide. N'attribue JAMAIS de score ni de pénalité chiffrée — cela sera calculé automatiquement à partir des types que tu identifies.
 
 Ensuite, propose entre 0 et 10 cartes de révision (0 si aucune erreur), chacune ciblant UNE erreur précise commise par l'utilisateur — au maximum une carte par erreur distincte relevée. Chaque carte a un recto (une phrase française nouvelle, 5-15 mots, autonome) et un verso (sa traduction anglaise correcte). Cette phrase doit être totalement INDÉPENDANTE des critères de l'exercice (type de texte, niveau, thèmes) — choisis la formulation la plus simple et directe possible pour isoler le point de difficulté, sans bruit contextuel.
 
@@ -574,7 +733,18 @@ Appelle l'outil submit_classification avec le résultat.`;
 
   // A translation with errors in most sentences (each echoed with its
   // explanations) plus up to 10 cards overran 4000 tokens and got cut off.
-  const result = await completeWithTool(prompt, classifyTool, 10000);
+  // Every sentence echoes its source and the learner's version; errors
+  // (explanations ~300 chars) and cards vary, so these are averages.
+  const sentences = params.reference.phrases.length;
+  const result = await completeWithTool(
+    prompt,
+    classifyTool,
+    10000,
+    params.onProgress && {
+      report: params.onProgress,
+      expectedChars: params.sourceText.length + params.userTranslation.length + sentences * 320 + 1000,
+    }
+  );
   return classificationSchema.parse(result);
 }
 

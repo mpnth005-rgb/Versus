@@ -31,7 +31,7 @@ export default async function LoginPage() {
           >
             <button
               type="submit"
-              className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-border-strong bg-white p-3.5 text-[14.5px] font-semibold text-ink-soft"
+              className="press-secondary flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-border-strong bg-white p-3.5 text-[14.5px] font-semibold text-ink-soft"
             >
               <svg width="17" height="17" viewBox="0 0 24 24">
                 <path
@@ -64,7 +64,7 @@ export default async function LoginPage() {
             >
               <button
                 type="submit"
-                className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg bg-ink p-3.5 text-[14.5px] font-semibold text-white"
+                className="press-primary flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg bg-ink p-3.5 text-[14.5px] font-semibold text-white"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.25 7.31c1.36.07 2.31.75 3.11.8.85.06 1.71-.13 2.85-.9 1.16.79 1.87 1.55 2.32 2.61-2.87 1.63-2.42 5.24.4 6.4-.34 1.09-.8 2.05-.88 2.06zM12.03 7.25c-.15-2.23 1.66-4.24 3.75-4.25.29 2.58-2.19 4.6-3.75 4.25z" />

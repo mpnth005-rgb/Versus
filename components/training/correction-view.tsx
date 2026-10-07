@@ -22,13 +22,13 @@ export type FlaggedSentence = {
   referenceSentence?: string | null;
 };
 
-/** Splits the full reference text around the corrected sentence so the
- * rest can be dimmed; null when there's nothing to highlight. */
+/** Splits a full text around one of its sentences so the rest can be
+ * dimmed; null when the sentence can't be found (nothing highlighted). */
 function splitAroundSentence(
   fullText: string,
-  sentence: FlaggedSentence
+  sentenceText: string | null | undefined
 ): { before: string; match: string; after: string } | null {
-  const match = sentence.referenceSentence?.trim();
+  const match = sentenceText?.trim();
   const start = match ? fullText.indexOf(match) : -1;
   if (!match || start === -1) return null;
   return {
@@ -45,7 +45,10 @@ export type CorrectionData = {
   overallScore: number;
   adjustedScore: number;
   referenceTranslation: string;
-  flaggedSentences: FlaggedSentence[];
+  sourceText: string;
+  // Every sentence of the text, correct ones included (with no errors).
+  // Older corrections only stored the sentences that had errors.
+  sentences: FlaggedSentence[];
   suggestedCardsCount: number;
   completed: boolean;
 };
@@ -55,11 +58,21 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
   const [index, setIndex] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  // Which full text the bottom panel shows: the French source text or the
+  // English reference translation.
+  const [referenceSide, setReferenceSide] = useState<"fr" | "en">("en");
 
-  const sentence = data.flaggedSentences[index];
-  const hasErrors = data.flaggedSentences.length > 0;
-  // The rest of the reference is dimmed so the corrected sentence stands out.
-  const highlight = sentence ? splitAroundSentence(data.referenceTranslation, sentence) : null;
+  const sentence = data.sentences[index];
+  const hasSentences = data.sentences.length > 0;
+  const isCorrect = sentence !== undefined && sentence.errors.length === 0;
+  // The rest of the text is dimmed so the current sentence stands out.
+  const referenceText = referenceSide === "fr" ? data.sourceText : data.referenceTranslation;
+  const highlight = sentence
+    ? splitAroundSentence(
+        referenceText,
+        referenceSide === "fr" ? sentence.sourceSentence : sentence.referenceSentence
+      )
+    : null;
 
   // The dialog stays open and greyed out until the completion page
   // replaces this one; it only resets if the request fails.
@@ -89,7 +102,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="flex cursor-pointer items-center gap-2 rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
+            className="press-secondary flex cursor-pointer items-center gap-2 rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
           >
             <span className="text-[15px]">✓</span>Terminer la session
           </button>
@@ -120,28 +133,26 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-ink-softer">
-            {hasErrors ? "Phrases à corriger" : "Correction phrase par phrase"}
+            Correction
           </div>
-          {hasErrors && (
+          {hasSentences && (
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 disabled={index === 0}
                 onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ‹
               </button>
               <div className="text-[12.5px] font-medium text-muted-light">
-                {index + 1} / {data.flaggedSentences.length}
+                {index + 1} / {data.sentences.length}
               </div>
               <button
                 type="button"
-                disabled={index === data.flaggedSentences.length - 1}
-                onClick={() =>
-                  setIndex((i) => Math.min(data.flaggedSentences.length - 1, i + 1))
-                }
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+                disabled={index === data.sentences.length - 1}
+                onClick={() => setIndex((i) => Math.min(data.sentences.length - 1, i + 1))}
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ›
               </button>
@@ -149,7 +160,17 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           )}
         </div>
 
-        {hasErrors && sentence ? (
+        {sentence && isCorrect ? (
+          <div className="flex flex-col gap-2.5 rounded-xl border border-[oklch(0.85_0.08_145)] bg-[oklch(0.97_0.03_145)] px-6 py-5">
+            <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
+              {sentence.sourceSentence}
+            </div>
+            <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
+            <div className="flex items-center gap-2 border-t border-[oklch(0.88_0.06_145)] pt-2.5 text-[13px] font-semibold text-[oklch(0.42_0.12_145)]">
+              <span>✓</span>Aucune erreur
+            </div>
+          </div>
+        ) : sentence ? (
           <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-white px-6 py-5">
             <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
               {sentence.sourceSentence}
@@ -173,8 +194,24 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl bg-paper-alt p-8">
-        <div className="text-sm font-semibold text-ink-softer">
-          Traduction de référence complète
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-ink-softer">
+            {referenceSide === "fr" ? "Texte de référence" : "Traduction de référence"}
+          </div>
+          <div className="flex items-center gap-2.5">
+            {(["fr", "en"] as const).map((side) => (
+              <button
+                key={side}
+                type="button"
+                disabled={referenceSide === side}
+                onClick={() => setReferenceSide(side)}
+                aria-label={side === "fr" ? "Texte de référence (français)" : "Traduction de référence (anglais)"}
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+              >
+                {side === "fr" ? "‹" : "›"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="text-[15.5px] leading-[1.8] text-ink-40">
           {highlight ? (
@@ -188,7 +225,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
               </span>
             </>
           ) : (
-            data.referenceTranslation
+            referenceText
           )}
         </div>
       </div>
@@ -202,7 +239,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           <button
             type="button"
             onClick={() => router.push(`/training/${data.exerciseId}/suggested-cards`)}
-            className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
+            className="press-primary cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
           >
             Cartes suggérées →
           </button>
@@ -210,7 +247,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
+            className="press-primary cursor-pointer rounded-lg bg-ink px-7 py-3.5 text-[15px] font-semibold text-white"
           >
             Terminer la session
           </button>

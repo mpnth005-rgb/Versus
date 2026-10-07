@@ -65,7 +65,7 @@ export function FilterSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={
-          "flex cursor-pointer items-center gap-1.5 rounded-lg border bg-white py-1.5 pr-3 pl-3 text-[12.5px] " +
+          "press-field flex cursor-pointer items-center gap-1.5 rounded-lg border bg-white py-1.5 pr-3 pl-3 text-[12.5px] " +
           (open ? "border-ink" : "border-border-strong")
         }
       >
@@ -136,6 +136,92 @@ const MONTHS = [
 const dayOf = (d: Date) =>
   Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 
+type XY = [number, number];
+
+const MORPH_MS = 450;
+const MORPH_SAMPLES = 120;
+const easeInOutCubic = (k: number) =>
+  k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
+
+/** The part of a polyline (viewBox units) that lies within 0…VIEW_W,
+ * cut exactly at both edges. */
+function clipToView(points: XY[]): XY[] {
+  if (points.length < 2) return points;
+  const out: XY[] = [];
+  const at = (p: XY, q: XY, x: number): XY => [x, p[1] + ((q[1] - p[1]) * (x - p[0])) / (q[0] - p[0])];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [p, q] = [points[i], points[i + 1]];
+    if (q[0] < 0 || p[0] > VIEW_W) continue;
+    const start = p[0] < 0 ? at(p, q, 0) : p;
+    const end = q[0] > VIEW_W ? at(p, q, VIEW_W) : q;
+    if (out.length === 0) out.push(start);
+    out.push(end);
+  }
+  return out;
+}
+
+/** `count` points evenly spread along the x span of a polyline. */
+function resample(points: XY[], count: number): XY[] {
+  if (points.length === 1) return Array.from({ length: count }, () => points[0]);
+  const x0 = points[0][0];
+  const x1 = points[points.length - 1][0];
+  let segment = 0;
+  return Array.from({ length: count }, (_, i) => {
+    const x = x0 + ((x1 - x0) * i) / (count - 1);
+    while (segment < points.length - 2 && points[segment + 1][0] < x) segment++;
+    const [p, q] = [points[segment], points[segment + 1]];
+    const t = q[0] === p[0] ? 0 : (x - p[0]) / (q[0] - p[0]);
+    return [x, p[1] + (q[1] - p[1]) * t];
+  });
+}
+
+const toPoints = (line: string): XY[] =>
+  line ? line.split(" ").map((pair) => pair.split(",").map(Number) as XY) : [];
+const toLine = (points: XY[]) => points.map(([x, y]) => `${x},${y}`).join(" ");
+
+/**
+ * The score line actually drawn: when the criteria change (period, Niveau,
+ * Type), it morphs from its current shape into the new one — only the line
+ * moves, the axes and labels switch at once. An interrupted morph restarts
+ * from wherever it had got to.
+ */
+function useMorphedLine(line: string): string {
+  const [drawn, setDrawn] = useState(line);
+  const current = useRef(line);
+
+  useEffect(() => {
+    const from = clipToView(toPoints(current.current));
+    const to = clipToView(toPoints(line));
+    let frame = 0;
+    if (from.length === 0 || to.length === 0) {
+      frame = requestAnimationFrame(() => {
+        current.current = line;
+        setDrawn(line);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    const a = resample(from, MORPH_SAMPLES);
+    const b = resample(to, MORPH_SAMPLES);
+    const startedAt = performance.now();
+    const step = (time: number) => {
+      const k = Math.min(1, (time - startedAt) / MORPH_MS);
+      const e = easeInOutCubic(k);
+      // Ends on the exact new line (not its resampled version).
+      const next =
+        k === 1
+          ? line
+          : toLine(a.map(([x, y], i) => [x + (b[i][0] - x) * e, y + (b[i][1] - y) * e]));
+      current.current = next;
+      setDrawn(next);
+      if (k < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [line]);
+
+  return drawn;
+}
+
 /** [start, end) of the week (Monday-based) or month that is `offset`
  * periods before the one containing `now`, as UTC day timestamps. */
 function periodBounds(
@@ -173,9 +259,11 @@ const average = (scores: number[]) =>
  * month at a time. The line is the running average of
  * every shown score up to each day (the "moyenne à date"), drawn across the
  * whole period — a period still in progress just stops at its last exercise.
- * The line starts on the period's first day at the average inherited from
- * earlier periods, so even a single exercise draws a visible move. A period
- * without any exercise shows "Aucune donnée". Positions are in % of the plot
+ * The line is one continuous curve across periods: it also runs to the last
+ * exercise day before the period and the first one after it, plotted
+ * outside the visible range and clipped at the edges, so it enters from the
+ * left and leaves to the right exactly as it would on a single long chart.
+ * A period without any exercise shows "Aucune donnée". Positions are in % of the plot
  * so markers stay round however wide the card is.
  */
 export function ScoreChart({
@@ -188,6 +276,9 @@ export function ScoreChart({
   const now = new Date(nowIso);
   const [granularity, setGranularity] = useState<Granularity>("all");
   const [offset, setOffset] = useState(0);
+  // Last period picked: on "Tout", the period selector keeps showing it
+  // while it slides away.
+  const [periodKind, setPeriodKind] = useState<"week" | "month">("month");
   const [level, setLevel] = useState<string | null>(null);
   const [textType, setTextType] = useState<string | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -209,48 +300,36 @@ export function ScoreChart({
       : periodBounds(now, granularity, offset);
   const firstEver = exercises.length > 0 ? dayOf(exercises[0].date) : start;
 
-  const before = shown.filter((e) => dayOf(e.date) < start).map((e) => e.score);
-  const inherited = before.length > 0 ? average(before) : null;
-
-  // One point per exercise day in the period: the average of every shown
-  // score up to the end of that day, plus that day's count (for the tooltip).
+  // One point per exercise day: the average of every shown score up to the
+  // end of that day, plus that day's count (for the tooltip).
+  const pointFor = (day: number) => ({
+    day,
+    avg: average(shown.filter((e) => dayOf(e.date) <= day).map((e) => e.score)),
+    count: shown.filter((e) => dayOf(e.date) === day).length,
+  });
   const days = shownDays
     .filter((day) => day >= start && day < end)
-    .map((day) => ({
-      day,
-      avg: average(
-        shown.filter((e) => dayOf(e.date) <= day).map((e) => e.score),
-      ),
-      count: shown.filter((e) => dayOf(e.date) === day).length,
-    }));
+    .map(pointFor);
 
   const lastDay = end - DAY_MS;
   const xPct = (day: number) =>
     lastDay === start ? 50 : ((day - start) / (lastDay - start)) * 100;
   const yPct = (score: number) => (scoreY(score) / VIEW_H) * 100;
 
-  const linePoints = [
-    ...(inherited !== null && days.length > 0 && days[0].day !== start
-      ? [{ day: start, avg: inherited }]
-      : []),
-    ...days,
-  ];
+  // The curve runs through every exercise day, so it stays continuous
+  // across period boundaries; the SVG clips what falls outside the period.
+  const linePoints = days.length === 0 ? [] : shownDays.map(pointFor);
   const avgLine = linePoints
     .map((d) => `${(xPct(d.day) / 100) * VIEW_W},${scoreY(d.avg)}`)
     .join(" ");
+  const drawnLine = useMorphedLine(avgLine);
   const midDay = start + Math.floor((lastDay - start) / DAY_MS / 2) * DAY_MS;
   const xLabels = (
     lastDay === start
       ? []
       : [
           { left: 0, text: formatShortDate(new Date(start)) },
-          {
-            left: xPct(midDay),
-            text:
-              granularity === "month"
-                ? String(new Date(midDay).getUTCDate())
-                : formatShortDate(new Date(midDay)),
-          },
+          { left: xPct(midDay), text: formatShortDate(new Date(midDay)) },
           { left: 100, text: formatShortDate(new Date(lastDay)) },
         ]
   ).concat(
@@ -266,7 +345,10 @@ export function ScoreChart({
   function changeGranularity(next: Granularity) {
     setGranularity(next);
     setOffset(0);
+    if (next !== "all") setPeriodKind(next);
   }
+  const isAll = granularity === "all";
+  const navBounds = isAll ? periodBounds(now, periodKind, 0) : { start, end };
 
   const arrow = (
     enabled: boolean,
@@ -280,7 +362,7 @@ export function ScoreChart({
       onClick={onClick}
       aria-label={label}
       className={
-        "px-1 text-[13px] " +
+        "press-icon flex h-5 w-5 items-center justify-center rounded-[5px] text-[12px] " +
         (enabled
           ? "cursor-pointer text-ink-40"
           : "cursor-default text-muted-ghost")
@@ -296,7 +378,7 @@ export function ScoreChart({
         <div className="text-sm font-semibold text-ink-softer">
           Évolution du score
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
           <div className="flex rounded-lg bg-paper-alt-2 p-0.5">
             {(["all", "month", "week"] as const).map((g) => (
               <button
@@ -304,35 +386,50 @@ export function ScoreChart({
                 type="button"
                 onClick={() => changeGranularity(g)}
                 className={
-                  "cursor-pointer rounded-md px-3 py-1 text-[12.5px] " +
+                  "cursor-pointer rounded-md px-3 py-1 text-[12.5px] transition-colors " +
                   (granularity === g
                     ? "bg-white font-semibold text-ink-softer shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                    : "font-medium text-muted-light")
+                    : "font-medium text-muted-light hover:text-ink")
                 }
               >
                 {g === "all" ? "Tout" : g === "month" ? "Mois" : "Semaine"}
               </button>
             ))}
           </div>
-          {granularity !== "all" && (
-            <div className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-softer">
-              {arrow(
-                canGoBack,
-                () => setOffset((o) => o + 1),
-                "Période précédente",
-                "‹",
-              )}
-              <span className="whitespace-nowrap">
-                {periodLabel(start, end, granularity)}
-              </span>
-              {arrow(
-                canGoForward,
-                () => setOffset((o) => o - 1),
-                "Période suivante",
-                "›",
-              )}
+          {/* "‹ Mois ›" opens out next to the toggle (0fr ↔ 1fr, like the
+              sidebar) while fading, so Tout/Mois/Semaine glides aside
+              instead of jumping. */}
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: isAll ? "0fr" : "1fr",
+              opacity: isAll ? 0 : 1,
+              transition: isAll
+                ? "grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease"
+                : "grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease 0.08s",
+            }}
+            inert={isAll}
+          >
+            <div className="min-w-0 overflow-hidden">
+              <div className="flex w-max items-center gap-1.5 pl-4 text-[12.5px] font-medium text-ink-softer">
+                {arrow(
+                  !isAll && canGoBack,
+                  () => setOffset((o) => o + 1),
+                  "Période précédente",
+                  "‹",
+                )}
+                <span className="whitespace-nowrap">
+                  {periodLabel(navBounds.start, navBounds.end, isAll ? periodKind : granularity)}
+                </span>
+                {arrow(
+                  !isAll && canGoForward,
+                  () => setOffset((o) => o - 1),
+                  "Période suivante",
+                  "›",
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -397,7 +494,7 @@ export function ScoreChart({
                   vectorEffect="non-scaling-stroke"
                 />
                 <polyline
-                  points={avgLine}
+                  points={drawnLine}
                   fill="none"
                   stroke="var(--color-accent-dark)"
                   strokeWidth="3"
@@ -407,7 +504,7 @@ export function ScoreChart({
                 />
               </svg>
 
-              {/* No inherited average and a single day: no line to draw, so
+              {/* A single day with no neighbour on either side: no line to draw, so
                   show that day's average as a dot as thick as the line. */}
               {linePoints.length === 1 && (
                 <span
@@ -419,28 +516,44 @@ export function ScoreChart({
                 />
               )}
 
-              {/* Invisible hover target on each day of the line; the hovered
-                  day shows as a ringed dot with its tooltip. */}
-              {days.map((d) => (
-                <span
-                  key={d.day}
-                  onMouseEnter={() => setHovered(d.day)}
-                  onMouseLeave={() =>
-                    setHovered((h) => (h === d.day ? null : h))
-                  }
-                  className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center"
-                  style={{ left: `${xPct(d.day)}%`, top: `${yPct(d.avg)}%` }}
-                >
-                  {d.day === hovered && (
-                    <span className="h-3 w-3 rounded-full bg-accent-dark ring-2 ring-white outline-2 outline-accent-dark" />
-                  )}
-                </span>
-              ))}
+              {/* Cursor: anywhere over the plot snaps to the nearest exercise
+                  day, marked by a dashed vertical line, a hollow dot on the
+                  line and the tooltip. */}
+              <div
+                className="absolute inset-0"
+                onMouseMove={(e) => {
+                  if (days.length === 0) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = ((e.clientX - rect.left) / rect.width) * 100;
+                  const nearest = days.reduce((best, d) =>
+                    Math.abs(xPct(d.day) - pct) < Math.abs(xPct(best.day) - pct)
+                      ? d
+                      : best,
+                  );
+                  setHovered(nearest.day);
+                }}
+                onMouseLeave={() => setHovered(null)}
+              />
+              {active && (
+                <>
+                  <span
+                    className="pointer-events-none absolute top-0 bottom-0 border-l border-dashed border-[oklch(0.8_0.01_90)]"
+                    style={{ left: `${xPct(active.day)}%` }}
+                  />
+                  <span
+                    className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-accent-dark bg-white"
+                    style={{
+                      left: `${xPct(active.day)}%`,
+                      top: `${yPct(active.avg)}%`,
+                    }}
+                  />
+                </>
+              )}
 
               {active && (
                 <div
                   className={
-                    "pointer-events-none absolute z-10 -translate-y-[calc(100%+12px)] rounded-lg bg-ink px-3 py-2 text-[12px] whitespace-nowrap text-white " +
+                    "pointer-events-none absolute z-10 -translate-y-[calc(100%+12px)] rounded-lg bg-ink px-3 py-2 text-[12px] leading-[1.45] whitespace-nowrap text-white shadow-[0_6px_16px_rgba(0,0,0,0.18)] " +
                     (xPct(active.day) < 15
                       ? ""
                       : xPct(active.day) > 85
@@ -455,7 +568,7 @@ export function ScoreChart({
                   <div className="font-semibold">
                     {formatShortDate(new Date(active.day))}
                   </div>
-                  <div className="text-white/70">
+                  <div className="text-[oklch(0.85_0.01_90)]">
                     Moyenne à date {formatScore(active.avg)}/20 · {active.count}{" "}
                     exercice
                     {active.count === 1 ? "" : "s"}

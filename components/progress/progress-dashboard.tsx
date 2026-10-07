@@ -55,7 +55,7 @@ function Toggle({ value, onChange }: { value: Dimension; onChange: (v: Dimension
       type="button"
       onClick={() => onChange(v)}
       className={
-        "cursor-pointer px-3 py-1.5 text-[11.5px] font-semibold " +
+        "press-chip cursor-pointer px-3 py-1.5 text-[11.5px] font-semibold " +
         (value === v ? "bg-ink text-white" : "bg-white text-ink-40")
       }
     >
@@ -88,7 +88,7 @@ function Chevron({
       onClick={onClick}
       aria-label={label}
       className={
-        "px-1 text-[13px] " + (enabled ? "cursor-pointer text-ink-40" : "cursor-default text-muted-ghost")
+        "press-icon flex h-5 w-5 items-center justify-center rounded-[5px] text-[12px] " + (enabled ? "cursor-pointer text-ink-40" : "cursor-default text-muted-ghost")
       }
     >
       {dir === "prev" ? "‹" : "›"}
@@ -157,6 +157,18 @@ export function ProgressDashboard({
     return weekExercises.filter((e) => e.date.getTime() >= from && e.date.getTime() < from + WEEK_MS).length;
   });
   const bars = buildWeeklyBars(weekCounts);
+  // A week is dark when it tops a rise: it has exercises, at least as many
+  // as the week before, and the following week has fewer — or there is no
+  // following week yet (current week). So two dark weeks never touch: the
+  // week after a dark one has fewer exercises, hence isn't on a rise.
+  const countOfWeek = (n: number) => {
+    const from = firstWeek + (n - 1) * WEEK_MS;
+    return weekExercises.filter((e) => e.date.getTime() >= from && e.date.getTime() < from + WEEK_MS).length;
+  };
+  const isPeak = (n: number, count: number) =>
+    count > 0 &&
+    (n === 1 || count >= countOfWeek(n - 1)) &&
+    (n >= currentWeekNumber || countOfWeek(n + 1) < count);
   const windowFirstMonth = monthName(yearMonthOf(new Date(firstWeek + (windowStart - 1) * WEEK_MS)));
   const windowLastMonth = monthName(yearMonthOf(new Date(firstWeek + windowEnd * WEEK_MS - DAY_MS)));
   const windowMonths =
@@ -178,7 +190,7 @@ export function ProgressDashboard({
         <div className="font-serif text-[30px] font-semibold text-ink">Suivi de progression</div>
         <Link
           href="/progress/history"
-          className="rounded-lg border border-border-strong bg-white px-4.5 py-2.5 text-[13px] font-semibold text-ink-40"
+          className="press-secondary rounded-lg border border-border-strong bg-white px-4.5 py-2.5 text-[13px] font-semibold text-ink-40"
         >
           Historique des exercices →
         </Link>
@@ -206,7 +218,7 @@ export function ProgressDashboard({
                 enabled={monthIndex > 0}
                 onClick={() => setMonth(months[monthIndex - 1])}
               />
-              <span className="capitalize">
+              <span className="translate-y-px capitalize">
                 {monthName(month)} {month.slice(0, 4)}
               </span>
               <Chevron
@@ -250,7 +262,7 @@ export function ProgressDashboard({
                 <span className="text-[15px] text-muted-light">/20</span>
               </div>
               <div className="border-t border-border-soft pt-2.5">
-                <div className="text-[10px] font-semibold uppercase text-muted-light">Meilleur</div>
+                <div className="text-[10px] font-semibold uppercase text-muted-light">Meilleure note</div>
                 <div className="text-[13px] font-semibold text-ink-softer">
                   {g.best !== null ? formatScore(g.best) : "—"}
                 </div>
@@ -268,34 +280,16 @@ export function ProgressDashboard({
         <div className={card + " flex min-w-0 flex-1 flex-col gap-4 px-7 py-6"}>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-ink-softer">Exercices par semaine</div>
-            <div className="flex gap-2">
-              <FilterSelect
-                label="Niveau"
-                value={weekLevel}
-                options={LEVELS}
-                labels={LEVEL_LABELS}
-                onChange={setWeekLevel}
-              />
-              <FilterSelect
-                label="Type"
-                value={weekType}
-                options={TEXT_TYPES}
-                labels={TEXT_TYPE_LABELS}
-                onChange={setWeekType}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="text-[11.5px] text-muted-light">
-              Semaines {windowStart} à {windowEnd} · {windowMonths}
-            </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-[11.5px] font-medium whitespace-nowrap text-ink-40">
               <Chevron
                 dir="prev"
                 label="Semaines précédentes"
                 enabled={windowStart > 1}
                 onClick={() => setWindowEnd((w) => Math.max(WEEKS_SHOWN, w - WEEKS_SHOWN))}
               />
+              <span>
+                Semaines {windowStart} à {windowEnd} · {windowMonths}
+              </span>
               <Chevron
                 dir="next"
                 label="Semaines suivantes"
@@ -303,6 +297,22 @@ export function ProgressDashboard({
                 onClick={() => setWindowEnd((w) => Math.min(lastWeekShown, w + WEEKS_SHOWN))}
               />
             </div>
+          </div>
+          <div className="flex gap-2">
+            <FilterSelect
+              label="Niveau"
+              value={weekLevel}
+              options={LEVELS}
+              labels={LEVEL_LABELS}
+              onChange={setWeekLevel}
+            />
+            <FilterSelect
+              label="Type"
+              value={weekType}
+              options={TEXT_TYPES}
+              labels={TEXT_TYPE_LABELS}
+              onChange={setWeekType}
+            />
           </div>
           <div>
             <div className="flex gap-2">
@@ -336,9 +346,15 @@ export function ProgressDashboard({
                     y={bar.y}
                     width="26"
                     height={bar.height}
-                    // The current week stands out; past weeks stay light.
+                    // Bars grow/shrink to their new count (filters, ‹ ›).
+                    style={{
+                      y: bar.y,
+                      height: bar.height,
+                      transition:
+                        "y 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), fill 0.3s ease",
+                    } as React.CSSProperties}
                     fill={
-                      weekNumbers[i] === currentWeekNumber
+                      isPeak(weekNumbers[i], bar.count)
                         ? "var(--color-accent)"
                         : "var(--color-accent-light)"
                     }

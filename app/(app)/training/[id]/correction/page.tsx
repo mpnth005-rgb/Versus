@@ -34,7 +34,8 @@ export default async function CorrectionPage({
         overallScore: exercise.correction.overallScore,
         adjustedScore: exercise.correction.adjustedScore,
         referenceTranslation: exercise.correction.referenceTranslation,
-        flaggedSentences: exercise.correction.sentenceCorrections as FlaggedSentence[],
+        sourceText: exercise.sourceText,
+        sentences: exercise.correction.sentenceCorrections as FlaggedSentence[],
         suggestedCardsCount: suggestedCards.length,
         completed: exercise.status === "COMPLETED",
       }}

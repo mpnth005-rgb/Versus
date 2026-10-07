@@ -17,7 +17,7 @@ export default async function HistoryPage() {
     // scrolls, and only its rows do.
     <div className="flex h-full flex-col gap-6 py-12 px-16">
       <div className="shrink-0">
-        <Link href="/progress" className="text-[13px] font-medium text-ink-40">
+        <Link href="/progress" className="press-link text-[13px] font-medium text-ink-40">
           ← Retour à la progression
         </Link>
         <div className="mt-3 font-serif text-[30px] font-semibold text-ink">

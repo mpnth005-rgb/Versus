@@ -18,7 +18,7 @@ export function AddCardButton({ isPremium }: { isPremium: boolean }) {
     return (
       <Link
         href="/deck/cards/new"
-        className="flex cursor-pointer items-center gap-2 rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white"
+        className="press-primary flex cursor-pointer items-center gap-2 rounded-lg bg-ink px-4.5 py-2.5 text-[13px] font-semibold text-white"
       >
         <span className="text-[15px]">+</span>Ajouter une carte
       </Link>
@@ -31,7 +31,7 @@ export function AddCardButton({ isPremium }: { isPremium: boolean }) {
         type="button"
         onClick={() => setUpsellOpen(true)}
         title="Réservé à Versus Upper"
-        className="flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-4.5 py-2.5 text-[13px] font-semibold text-muted-lighter"
+        className="press-locked flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-4.5 py-2.5 text-[13px] font-semibold text-muted-lighter"
       >
         <LockIcon />
         Ajouter une carte

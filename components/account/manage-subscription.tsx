@@ -45,7 +45,7 @@ export function ManageSubscription({
             type="button"
             onClick={openPortal}
             disabled={loading}
-            className="cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
+            className="press-secondary cursor-pointer whitespace-nowrap rounded-lg border border-border-strong px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
           >
             Gérer l&apos;abonnement
           </button>
@@ -53,7 +53,7 @@ export function ManageSubscription({
           <button
             type="button"
             onClick={() => setUpsellOpen(true)}
-            className="cursor-pointer whitespace-nowrap rounded-lg bg-ink px-5 py-[11px] text-[13.5px] font-semibold text-white"
+            className="press-primary cursor-pointer whitespace-nowrap rounded-lg bg-ink px-5 py-[11px] text-[13.5px] font-semibold text-white"
           >
             Passer à Versus Upper
           </button>

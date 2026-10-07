@@ -7,6 +7,10 @@ import { useState } from "react";
 import { NAV_ITEMS } from "@/lib/constants";
 import type { Quota } from "@/lib/quota";
 import { UpsellModal } from "@/components/upsell-modal";
+import {
+  TrainingSessionProvider,
+  useTrainingSession,
+} from "@/components/training-session";
 
 function Logo() {
   return (
@@ -19,7 +23,13 @@ function Logo() {
   );
 }
 
-function QuotaWidget({ quota, onUpgradeClick }: { quota: Quota; onUpgradeClick: () => void }) {
+function QuotaWidget({
+  quota,
+  onUpgradeClick,
+}: {
+  quota: Quota;
+  onUpgradeClick: () => void;
+}) {
   if (quota.isPremium) {
     return (
       <div className="mt-auto rounded-[10px] bg-accent p-4 text-[12.5px] leading-[1.5] text-accent-light">
@@ -38,80 +48,139 @@ function QuotaWidget({ quota, onUpgradeClick }: { quota: Quota; onUpgradeClick: 
     <button
       type="button"
       onClick={onUpgradeClick}
-      className="mt-auto cursor-pointer rounded-[10px] bg-paper-alt p-4 text-left text-[12.5px] leading-[1.5] text-muted-light"
+      className="press-quota mt-auto cursor-pointer rounded-[10px] bg-paper-alt p-4 text-left text-[12.5px] leading-[1.5] text-muted-light"
     >
       <div className="mb-1 font-semibold text-ink-softer">Versus gratuit</div>
       <div className="whitespace-nowrap">
-        {quota.exercisesRemaining} texte{quota.exercisesRemaining === 1 ? "" : "s"} restant
+        {quota.exercisesRemaining} texte
+        {quota.exercisesRemaining === 1 ? "" : "s"} restant
         {quota.exercisesRemaining === 1 ? "" : "s"} ce mois-ci
       </div>
     </button>
   );
 }
 
-export function AppShell({ quota, children }: { quota: Quota; children: React.ReactNode }) {
+function SidebarNav({ pathname }: { pathname: string }) {
+  // "Entraînement" leads back to the exercise in progress, if any.
+  const { trainingHref } = useTrainingSession();
+
+  return (
+    <nav className="flex flex-col gap-0.5">
+      {NAV_ITEMS.map((item) => {
+        const active =
+          pathname === item.href || pathname.startsWith(item.href + "/");
+        return (
+          <Link
+            key={item.href}
+            href={item.href === "/training" ? trainingHref : item.href}
+            className={
+              "rounded-lg px-3.5 py-2.5 text-sm " +
+              (active
+                ? "bg-accent-light font-semibold text-accent-ink"
+                : "press-nav font-medium text-ink-40")
+            }
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function AppShell({
+  quota,
+  children,
+}: {
+  quota: Quota;
+  children: React.ReactNode;
+}) {
   const [open, setOpen] = useState(true);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const pathname = usePathname();
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-paper">
-      {/* The sidebar is as wide as its widest content — the quota widget's
+    <TrainingSessionProvider pathname={pathname}>
+      <div className="relative flex h-screen overflow-hidden bg-paper">
+        {/* The sidebar is as wide as its widest content — the quota widget's
           single-line text — so the widget always hugs that text with the
           same 16px margin on both sides, whatever the font rendering or
           zoom. */}
-      {open && (
-        <div className="flex h-screen w-fit flex-shrink-0 flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8">
-          <div className="flex items-center justify-between">
-            <Logo />
-            <button
-              type="button"
-              title="Fermer la sidebar"
-              onClick={() => setOpen(false)}
-              className="flex h-[26px] w-[26px] cursor-pointer items-center justify-center rounded-[7px] text-[13px] text-muted-light"
-            >
-              «
-            </button>
-          </div>
-
-          <nav className="flex flex-col gap-0.5">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={
-                    "rounded-lg px-3.5 py-2.5 text-sm " +
-                    (active
-                      ? "bg-accent-light font-semibold text-accent-ink"
-                      : "font-medium text-ink-40")
-                  }
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <QuotaWidget quota={quota} onUpgradeClick={() => setUpsellOpen(true)} />
-        </div>
-      )}
-
-      {!open && (
-        <button
-          type="button"
-          title="Ouvrir la sidebar"
-          onClick={() => setOpen(true)}
-          className="fixed top-6 left-6 z-10 flex h-[26px] w-[26px] cursor-pointer items-center justify-center rounded-[7px] border border-border bg-white text-[13px] text-muted-light shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+        {/* Opening/closing animates the column from 0 to its content width
+            (grid 0fr ↔ 1fr) while the content — kept at its max-content width
+            so the text never reflows or gets squeezed — only fades and
+            slides, as in the design prototype. Closed, the sidebar is inert (no focus/clicks). */}
+        <div
+          className="grid flex-shrink-0 transition-[grid-template-columns] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{ gridTemplateColumns: open ? "1fr" : "0fr" }}
         >
-          »
-        </button>
-      )}
+          <div className="min-w-0 overflow-hidden" inert={!open}>
+            <div
+              className={
+                "flex h-screen w-max flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8 " +
+                (open
+                  ? "translate-x-0 opacity-100"
+                  : "-translate-x-4 opacity-0")
+              }
+              style={{
+                transition:
+                  "opacity 0.224s ease, transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              <div className="flex items-start justify-between">
+                <Logo />
+                {/* Centred on the line of the "Versus" wordmark: a wrapper one
+                    line tall at the wordmark's font size. */}
+                <div className="flex h-[1lh] items-center font-serif text-[23px]">
+                  <button
+                    type="button"
+                    title="Fermer la sidebar"
+                    onClick={() => setOpen(false)}
+                    className="press-icon flex h-[26px] w-[26px] cursor-pointer items-center justify-center rounded-[7px] font-sans text-[13px] text-muted-light"
+                  >
+                    «
+                  </button>
+                </div>
+              </div>
 
-      <div className="h-screen min-w-0 flex-1 overflow-y-auto">{children}</div>
+              <SidebarNav pathname={pathname} />
 
-      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
-    </div>
+              <QuotaWidget
+                quota={quota}
+                onUpgradeClick={() => setUpsellOpen(true)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* "»" fades in once the sidebar is closed. */}
+        <div
+          className={
+            "fixed top-6 left-6 z-10 " +
+            (open ? "pointer-events-none opacity-0" : "opacity-100")
+          }
+          style={{
+            // Appears once the sidebar has mostly closed; hides at once.
+            transition: `opacity 0.2s ease ${open ? "0s" : "0.192s"}`,
+          }}
+          inert={open}
+        >
+          <button
+            type="button"
+            title="Ouvrir la sidebar"
+            onClick={() => setOpen(true)}
+            className="press-icon flex h-[26px] w-[26px] cursor-pointer items-center justify-center rounded-[7px] border border-border bg-white text-[13px] text-muted-light shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+          >
+            »
+          </button>
+        </div>
+
+        <div className="h-screen min-w-0 flex-1 overflow-y-auto">
+          {children}
+        </div>
+
+        <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
+      </div>
+    </TrainingSessionProvider>
   );
 }

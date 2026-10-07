@@ -62,8 +62,8 @@ export default async function CompletePage({
             className={
               "rounded-lg px-6.5 py-3 text-[14.5px] font-semibold " +
               (cardsAdded > 0
-                ? "border border-border-strong text-ink-40"
-                : "bg-ink text-white")
+                ? "press-secondary border border-border-strong text-ink-40"
+                : "press-primary bg-ink text-white")
             }
           >
             Nouvel exercice
@@ -72,7 +72,7 @@ export default async function CompletePage({
         {cardsAdded > 0 && (
           <Link
             href="/deck"
-            className="rounded-lg bg-ink px-6.5 py-3 text-[14.5px] font-semibold text-white"
+            className="press-primary rounded-lg bg-ink px-6.5 py-3 text-[14.5px] font-semibold text-white"
           >
             Voir le deck de révision
           </Link>

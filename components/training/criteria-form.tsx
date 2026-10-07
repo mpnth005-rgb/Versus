@@ -4,23 +4,33 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
+import { fetchWithProgress } from "@/lib/progress-stream";
 import { LockIcon } from "@/components/lock-icon";
 import { UpsellModal } from "@/components/upsell-modal";
+import { Modal } from "@/components/modal";
 import { NEWS_WARNED_KEY } from "@/components/training/news-warning";
 import {
-  TEXT_TYPE_LABELS,
-  LEVEL_LABELS,
-  THEME_OPTIONS,
-} from "@/lib/constants";
+  useTrainingSession,
+  type Level,
+  type TextType,
+} from "@/components/training-session";
+import { TEXT_TYPE_LABELS, LEVEL_LABELS, THEME_OPTIONS } from "@/lib/constants";
 
 const TEXT_TYPES = ["LITERARY", "JOURNALISTIC", "DAILY"] as const;
 const LEVELS = ["A2", "B1", "B2", "C1"] as const;
 
-export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }) {
+export function CriteriaForm({
+  canStartExercise,
+}: {
+  canStartExercise: boolean;
+}) {
   const router = useRouter();
-  const [textType, setTextType] = useState<(typeof TEXT_TYPES)[number] | null>(null);
-  const [level, setLevel] = useState<(typeof LEVELS)[number] | null>(null);
-  const [theme, setTheme] = useState<string | null>(null);
+  // Criteria live in the app shell (TrainingSessionProvider) so they stay
+  // selected while the learner browses other pages.
+  const { criteria, setCriteria } = useTrainingSession();
+  const { textType, level, theme } = criteria;
+  const setTextType = (t: TextType) => setCriteria({ textType: t });
+  const setLevel = (l: Level) => setCriteria({ level: l });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
@@ -30,6 +40,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   // generating a text and coming back to the criteria doesn't repeat it.
   const [anchoredInNews, setAnchoredInNews] = useState(false);
   const [newsWarningOpen, setNewsWarningOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   function toggleAnchoredInNews() {
     if (anchoredInNews) return setAnchoredInNews(false);
@@ -51,7 +62,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
     }
   }
 
-  if (pending) return <LoadingScreen variant="generate" />;
+  if (pending) return <LoadingScreen progress={progress} />;
 
   const isValid = textType !== null && level !== null && theme !== null;
   const disabled = !isValid || !canStartExercise;
@@ -61,26 +72,29 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
   // One theme at a time: picking another replaces it, clicking the current
   // one clears it. The subtheme is drawn server-side (lib/ai.ts).
   function toggleTheme(next: string) {
-    setTheme((current) => (current === next ? null : next));
+    setCriteria({ theme: theme === next ? null : next });
   }
 
   async function handleSubmit() {
     if (disabled) return;
     setError(null);
+    setProgress(0);
     setPending(true);
     try {
-      const res = await fetch("/api/exercises", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          textType,
-          level,
-          themes,
-          anchoredInNews: textType === "JOURNALISTIC" && anchoredInNews,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
+      const data = await fetchWithProgress<{ id: string }>(
+        "/api/exercises",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            textType,
+            level,
+            themes,
+            anchoredInNews: textType === "JOURNALISTIC" && anchoredInNews,
+          }),
+        },
+        setProgress
+      );
       router.push(`/training/${data.id}`);
       router.refresh();
     } catch (e) {
@@ -101,7 +115,9 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
       </div>
 
       <div className="flex flex-col gap-3.5 border-b border-border pb-7">
-        <div className="text-sm font-semibold text-ink-softer">Type de texte</div>
+        <div className="text-sm font-semibold text-ink-softer">
+          Type de texte
+        </div>
         <div className="flex gap-2.5">
           {TEXT_TYPES.map((t) => (
             <button
@@ -113,10 +129,10 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                 if (t !== "JOURNALISTIC") setAnchoredInNews(false);
               }}
               className={
-                "cursor-pointer rounded-lg px-5 py-2.5 text-sm font-medium " +
+                "press-chip cursor-pointer rounded-lg px-5 py-2.5 text-sm font-medium " +
                 (textType === t
                   ? "bg-accent text-white"
-                  : "border border-border-strong text-ink-40")
+                  : "border border-border-strong bg-white text-ink-40")
               }
             >
               {TEXT_TYPE_LABELS[t]}
@@ -134,7 +150,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             >
               <span
                 className={
-                  "relative mt-0.5 h-6 w-11 flex-shrink-0 rounded-full transition-colors " +
+                  "press-switch relative mt-0.5 h-6 w-11 flex-shrink-0 rounded-full transition-colors " +
                   (anchoredInNews ? "bg-ink" : "bg-paper-alt-3")
                 }
               >
@@ -150,8 +166,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                   Ancrer dans l&apos;actualité
                 </span>
                 <span className="mt-0.5 block text-[13px] text-muted-light">
-                  Recherche l&apos;actualité sur internet : événements récents, personnalités publiques et
-                  dates précises.
+                  Événements récents, personnalités publiques et dates précises.
                 </span>
               </span>
             </button>
@@ -160,7 +175,9 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
       </div>
 
       <div className="flex flex-col gap-3.5 border-b border-border py-7">
-        <div className="text-sm font-semibold text-ink-softer">Niveau de langue</div>
+        <div className="text-sm font-semibold text-ink-softer">
+          Niveau de langue
+        </div>
         <div className="flex w-fit overflow-hidden rounded-lg border border-border-strong">
           {LEVELS.map((l, i) => (
             <button
@@ -168,11 +185,11 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
               type="button"
               onClick={() => setLevel(l)}
               className={
-                "px-[22px] py-2.5 text-sm cursor-pointer " +
+                "press-chip px-[22px] py-2.5 text-sm cursor-pointer " +
                 (i > 0 ? "border-l border-border-strong " : "") +
                 (level === l
                   ? "bg-accent font-semibold text-white"
-                  : "font-medium text-[oklch(0.45_0.01_90)]")
+                  : "bg-white font-medium text-[oklch(0.45_0.01_90)]")
               }
             >
               {LEVEL_LABELS[l]}
@@ -183,9 +200,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
 
       <div className="flex flex-col gap-3.5 pt-7">
         <div className="flex items-baseline justify-between">
-          <div className="text-sm font-semibold text-ink-softer">
-            Thème
-          </div>
+          <div className="text-sm font-semibold text-ink-softer">Thème</div>
         </div>
         <div className="flex flex-wrap gap-2.5">
           {THEME_OPTIONS.map((option) => {
@@ -196,10 +211,10 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
                 type="button"
                 onClick={() => toggleTheme(option)}
                 className={
-                  "cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13.5px] font-medium " +
+                  "press-chip cursor-pointer whitespace-nowrap rounded-full px-4 py-2 text-[13.5px] font-medium " +
                   (selected
                     ? "bg-accent-light text-accent-ink"
-                    : "border border-border-strong text-[oklch(0.45_0.01_90)]")
+                    : "border border-border-strong bg-white text-[oklch(0.45_0.01_90)]")
                 }
               >
                 {option}
@@ -216,7 +231,7 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             disabled={disabled}
             onClick={handleSubmit}
             className={
-              "rounded-lg px-7 py-3.5 text-[15px] font-semibold " +
+              "press-primary rounded-lg px-7 py-3.5 text-[15px] font-semibold " +
               (disabled
                 ? "cursor-not-allowed bg-paper-alt-3 text-muted-ghost"
                 : "cursor-pointer bg-ink text-white")
@@ -229,15 +244,12 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
             type="button"
             onClick={() => setUpsellOpen(true)}
             title="Réservé à Versus Upper"
-            className="flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-7 py-3.5 text-[15px] font-semibold text-muted-lighter"
+            className="press-locked flex cursor-pointer items-center gap-2 rounded-lg bg-paper-alt-3 px-7 py-3.5 text-[15px] font-semibold text-muted-lighter"
           >
             <LockIcon size={13} />
             Générer le texte
           </button>
         )}
-        <div className="max-w-[280px] text-[12.5px] text-muted-light">
-          Un nouveau texte de 130–170 mots sera généré selon vos critères.
-        </div>
       </div>
 
       {!canStartExercise && (
@@ -245,45 +257,41 @@ export function CriteriaForm({ canStartExercise }: { canStartExercise: boolean }
           Limite mensuelle de textes atteinte.
         </div>
       )}
-      {error && <div className="mt-4 text-[12.5px] text-danger-text">{error}</div>}
-      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
-      {newsWarningOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[oklch(0.2_0.01_90/0.45)]"
-          onClick={() => setNewsWarningOpen(false)}
-        >
-          <div
-            className="flex w-[440px] max-w-[90vw] flex-col gap-5 rounded-[14px] bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.25)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="font-serif text-[21px] font-semibold text-ink">
-              Textes ancrés dans l&apos;actualité
-            </div>
-            <div className="text-sm leading-[1.6] text-muted-light">
-              Le texte s&apos;appuiera sur une recherche internet : il citera des événements
-              récents, des personnalités publiques et des dates précises. Les sources sont
-              résumées par une IA : certains faits peuvent être mal restitués. Ne les utilisez
-              pas comme source sans les vérifier.
-            </div>
-            <div className="mt-1.5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setNewsWarningOpen(false)}
-                className="cursor-pointer rounded-lg border border-border-strong px-5 py-2.5 text-[13.5px] font-semibold text-ink-40"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={confirmNewsWarning}
-                className="cursor-pointer rounded-lg bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-white"
-              >
-                J&apos;ai compris, activer
-              </button>
-            </div>
-          </div>
-        </div>
+      {error && (
+        <div className="mt-4 text-[12.5px] text-danger-text">{error}</div>
       )}
+      <UpsellModal open={upsellOpen} onClose={() => setUpsellOpen(false)} />
+      <Modal
+        open={newsWarningOpen}
+        onClose={() => setNewsWarningOpen(false)}
+        panelClassName="flex w-[440px] max-w-[90vw] flex-col gap-5 rounded-[14px] bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.25)]"
+      >
+        <div className="font-serif text-[21px] font-semibold text-ink">
+          Textes ancrés dans l&apos;actualité
+        </div>
+        <div className="text-sm leading-[1.6] text-muted-light">
+          Le texte s&apos;appuiera sur une recherche internet : il citera des
+          événements récents, des personnalités publiques et des dates précises.
+          Les sources sont résumées par une IA : certains faits peuvent être mal
+          restitués. Ne les utilisez pas comme source sans les vérifier.
+        </div>
+        <div className="mt-1.5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setNewsWarningOpen(false)}
+            className="press-secondary cursor-pointer rounded-lg border border-border-strong px-5 py-2.5 text-[13.5px] font-semibold text-ink-40"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={confirmNewsWarning}
+            className="press-primary cursor-pointer rounded-lg bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-white"
+          >
+            J&apos;ai compris, activer
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

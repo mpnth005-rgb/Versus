@@ -48,7 +48,7 @@ export function CardForm({
         <button
           type="button"
           onClick={() => router.push("/deck/cards")}
-          className="mb-3.5 cursor-pointer text-[13px] font-medium text-ink-40"
+          className="press-link mb-3.5 cursor-pointer text-[13px] font-medium text-ink-40"
         >
           ← Retour au deck
         </button>
@@ -67,7 +67,7 @@ export function CardForm({
             onChange={(e) => setFront(e.target.value)}
             placeholder="Une phrase en français à mémoriser…"
             rows={2}
-            className="min-h-16 rounded-lg border border-border-strong bg-white px-4.5 py-4 font-serif text-[15.5px] text-ink-softer outline-none"
+            className="min-h-16 font-serif text-[15.5px] text-[oklch(0.25_0.01_90)] resize-y rounded-lg border border-border-strong bg-white px-[18px] py-4 outline-none transition-[border-color,box-shadow] duration-150 focus:border-[oklch(0.45_0.09_200)] focus:shadow-[0_0_0_1px_oklch(0.45_0.09_200)]"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -79,7 +79,7 @@ export function CardForm({
             onChange={(e) => setBack(e.target.value)}
             placeholder="Its English translation…"
             rows={2}
-            className="min-h-16 rounded-lg border-2 border-accent bg-white px-4.5 py-4 text-[15px] text-ink-40 outline-none"
+            className="min-h-16 text-[15px] text-ink-softer resize-y rounded-lg border border-border-strong bg-white px-[18px] py-4 outline-none transition-[border-color,box-shadow] duration-150 focus:border-[oklch(0.45_0.09_200)] focus:shadow-[0_0_0_1px_oklch(0.45_0.09_200)]"
           />
         </div>
       </div>
@@ -88,7 +88,7 @@ export function CardForm({
         <button
           type="button"
           onClick={() => router.push("/deck/cards")}
-          className="cursor-pointer rounded-lg border border-border-strong px-6.5 py-3.5 text-[14.5px] font-semibold text-ink-40"
+          className="press-secondary cursor-pointer rounded-lg border border-border-strong bg-white px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
         >
           Annuler
         </button>
@@ -96,9 +96,12 @@ export function CardForm({
           type="button"
           onClick={submit}
           disabled={pending || !front.trim() || !back.trim()}
+          title={!front.trim() || !back.trim() ? "Remplissez le recto et le verso" : undefined}
           className={
-            "cursor-pointer rounded-lg bg-ink px-6.5 py-3.5 text-[14.5px] font-semibold text-white " +
-            (!front.trim() || !back.trim() ? "opacity-60" : "")
+            "rounded-lg border px-5 py-[11px] text-[13.5px] font-semibold " +
+            (!front.trim() || !back.trim()
+              ? "cursor-not-allowed border-paper-alt-3 bg-paper-alt-3 text-[oklch(0.65_0.01_90)]"
+              : "press-primary cursor-pointer border-ink bg-ink text-white")
           }
         >
           {mode === "create" ? "Ajouter la carte" : "Enregistrer"}

@@ -29,6 +29,8 @@ export default async function DeckCardsPage({
   ]);
 
   const otherDir = sortDir === "asc" ? "desc" : "asc";
+  // ↓ = oldest/soonest first, ↑ = reversed (as in the prototype).
+  const arrow = sortDir === "asc" ? " ↓" : " ↑";
 
   return (
     <div className="flex h-full flex-col gap-6 py-12 px-16">
@@ -47,20 +49,24 @@ export default async function DeckCardsPage({
             <Link
               href={`/deck/cards?sort=created&dir=${sortField === "createdAt" ? otherDir : "desc"}`}
               className={
-                "px-3 py-1.5 font-medium " +
-                (sortField === "createdAt" ? "bg-ink text-white" : "bg-white text-ink-40")
+                "press-chip px-3 py-1.5 " +
+                (sortField === "createdAt"
+                  ? "bg-ink font-semibold text-white"
+                  : "bg-white font-medium text-ink-40")
               }
             >
-              CRÉÉE
+              CRÉÉE{sortField === "createdAt" && arrow}
             </Link>
             <Link
               href={`/deck/cards?sort=due&dir=${sortField === "dueAt" ? otherDir : "asc"}`}
               className={
-                "px-3 py-1.5 font-medium " +
-                (sortField === "dueAt" ? "bg-ink text-white" : "bg-white text-ink-40")
+                "press-chip px-3 py-1.5 " +
+                (sortField === "dueAt"
+                  ? "bg-ink font-semibold text-white"
+                  : "bg-white font-medium text-ink-40")
               }
             >
-              DUE
+              DUE{sortField === "dueAt" && arrow}
             </Link>
           </div>
         </div>
@@ -86,7 +92,7 @@ export default async function DeckCardsPage({
             {cards.map((card) => (
               <div
                 key={card.id}
-                className="grid grid-cols-[2.3fr_2.3fr_1fr_1.2fr_68px] items-center border-t border-border-soft px-6 py-4 text-[13.5px]"
+                className="grid grid-cols-[2.3fr_2.3fr_1fr_1.2fr_68px] items-center border-t border-border-soft px-6 py-4 text-[13.5px] transition-colors duration-150 hover:bg-[oklch(0.99_0.003_90)]"
               >
                 <div className="pr-4 text-ink-softer">{card.front}</div>
                 <div className="pr-4 text-ink-45">{card.back}</div>
@@ -96,7 +102,7 @@ export default async function DeckCardsPage({
                   <Link
                     href={`/deck/cards/${card.id}/edit`}
                     title="Modifier"
-                    className="flex h-6 w-6 items-center justify-center rounded-md border border-border-strong text-[11px] text-ink-40"
+                    className="press-secondary flex h-6 w-6 items-center justify-center rounded-md border border-border-strong text-[11px] text-ink-40"
                   >
                     ✎
                   </Link>
@@ -108,7 +114,7 @@ export default async function DeckCardsPage({
         )}
       </div>
 
-      <Link href="/deck" className="shrink-0 text-[13px] font-medium text-ink-40">
+      <Link href="/deck" className="press-link shrink-0 text-[13px] font-medium text-ink-40">
         ← Retour à la session de révision
       </Link>
     </div>

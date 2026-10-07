@@ -1,39 +1,14 @@
-type Variant = "generate" | "correct";
-
-const MESSAGES: Record<Variant, string[]> = {
-  generate: ["Analyse de vos critères…", "Rédaction du texte…", "Finalisation…"],
-  correct: [
-    "Lecture de votre traduction…",
-    "Comparaison avec la référence…",
-    "Calcul du score…",
-  ],
-};
-
-export function LoadingScreen({ variant }: { variant: Variant }) {
-  const messages = MESSAGES[variant];
-
+/** Full-screen wait during AI work. `progress` (0–1) comes from the route's
+ * progress stream (lib/progress-stream.ts); the bar glides between reports. */
+export function LoadingScreen({ progress }: { progress: number }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-[30px] bg-paper">
       <div className="font-serif text-[38px] font-semibold text-ink">V</div>
       <div className="h-[5px] w-80 overflow-hidden rounded-[3px] bg-paper-alt-2">
-        <div className="animate-progress-fill h-full rounded-[3px] bg-accent" />
-      </div>
-      <div className="relative h-5 w-80 text-center">
-        {messages.length === 1 ? (
-          <div className="text-sm text-muted-light">{messages[0]}</div>
-        ) : (
-          <>
-            <div className="animate-load-a absolute inset-0 text-sm text-muted-light">
-              {messages[0]}
-            </div>
-            <div className="animate-load-b absolute inset-0 text-sm text-muted-light">
-              {messages[1]}
-            </div>
-            <div className="animate-load-c absolute inset-0 text-sm text-muted-light">
-              {messages[2]}
-            </div>
-          </>
-        )}
+        <div
+          className="h-full rounded-[3px] bg-accent transition-[width] duration-500 ease-out"
+          style={{ width: `${Math.max(3, progress * 100)}%` }}
+        />
       </div>
     </div>
   );

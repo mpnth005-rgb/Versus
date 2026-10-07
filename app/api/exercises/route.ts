@@ -7,6 +7,7 @@ import { generateExerciseText, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, consumeExerciseQuota } from "@/lib/quota";
 import { getRecentTitles } from "@/lib/progress";
 import { MAX_THEMES, THEME_OPTIONS } from "@/lib/constants";
+import { progressResponse, scaledProgress } from "@/lib/progress-stream";
 
 const bodySchema = z.object({
   textType: z.enum(["LITERARY", "JOURNALISTIC", "DAILY"]),
@@ -39,34 +40,44 @@ export async function POST(req: NextRequest) {
   const anchoredInNews =
     parsed.data.anchoredInNews === true && parsed.data.textType === "JOURNALISTIC";
 
-  try {
-    // The subtheme is no longer picked by the learner: lib/ai.ts draws one
-    // (and an angle within it) for every generation.
-    const recentTitles = await getRecentTitles(session.user.id);
-    const generated = await generateExerciseText({ ...parsed.data, anchoredInNews, recentTitles });
-    const exercise = await prisma.exercise.create({
-      data: {
-        userId: session.user.id,
-        title: generated.title,
-        textType: parsed.data.textType,
-        level: parsed.data.level,
-        themes: parsed.data.themes,
+  const userId = session.user.id;
+  const criteria = parsed.data;
+
+  // From here on, the loading screen's bar follows the generation as it is
+  // written (lib/progress-stream.ts).
+  return progressResponse(async (report) => {
+    report(0.03);
+    try {
+      // The subtheme is no longer picked by the learner: lib/ai.ts draws one
+      // (and an angle within it) for every generation.
+      const recentTitles = await getRecentTitles(userId);
+      const generated = await generateExerciseText({
+        ...criteria,
         anchoredInNews,
-        sourceText: generated.sourceText,
-        wordCount: generated.wordCount,
-        status: "READY",
-      },
-    });
-    await consumeExerciseQuota(session.user.id);
-    return NextResponse.json({ id: exercise.id });
-  } catch (error) {
-    if (error instanceof AiNotConfiguredError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
+        recentTitles,
+        onProgress: scaledProgress(report, 0.03, 0.97),
+      });
+      const exercise = await prisma.exercise.create({
+        data: {
+          userId,
+          title: generated.title,
+          textType: criteria.textType,
+          level: criteria.level,
+          themes: criteria.themes,
+          anchoredInNews,
+          sourceText: generated.sourceText,
+          wordCount: generated.wordCount,
+          status: "READY",
+        },
+      });
+      await consumeExerciseQuota(userId);
+      return { status: 200, body: { id: exercise.id } };
+    } catch (error) {
+      if (error instanceof AiNotConfiguredError) {
+        return { status: 503, body: { error: error.message } };
+      }
+      console.error("exercise generation error", error);
+      return { status: 500, body: { error: "La génération du texte a échoué. Réessayez." } };
     }
-    console.error("exercise generation error", error);
-    return NextResponse.json(
-      { error: "La génération du texte a échoué. Réessayez." },
-      { status: 500 }
-    );
-  }
+  });
 }

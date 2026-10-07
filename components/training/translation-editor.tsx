@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LoadingScreen } from "@/components/loading-screen";
+import { fetchWithProgress } from "@/lib/progress-stream";
 import { LockIcon } from "@/components/lock-icon";
 import { UpsellModal } from "@/components/upsell-modal";
+import { useTrainingSession } from "@/components/training-session";
 import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
 
 export type EditorExercise = {
@@ -35,13 +37,18 @@ export function TranslationEditor({
 }) {
   const router = useRouter();
   const [exercise, setExercise] = useState(initial);
-  const [translation, setTranslation] = useState("");
+  // The translation typed so far is kept in the app shell, so it survives
+  // a detour through the other sidebar pages.
+  const { drafts, setDraft } = useTrainingSession();
+  const translation = drafts[initial.id] ?? "";
+  const setTranslation = (text: string) => setDraft(initial.id, text);
   const [regenerating, setRegenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
 
-  if (submitting) return <LoadingScreen variant="correct" />;
+  if (submitting) return <LoadingScreen progress={progress} />;
 
   const translationWords = wordCount(translation);
   const canSubmit = translation.trim().length > 0 && translationWords >= exercise.wordCount * 0.5;
@@ -87,15 +94,18 @@ export function TranslationEditor({
   async function submit() {
     if (!canSubmit) return;
     setError(null);
+    setProgress(0);
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/exercises/${exercise.id}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ translation }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
+      await fetchWithProgress(
+        `/api/exercises/${exercise.id}/submit`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ translation }),
+        },
+        setProgress
+      );
       router.push(`/training/${exercise.id}/correction`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Une erreur est survenue.");
@@ -132,7 +142,7 @@ export function TranslationEditor({
             type="button"
             onClick={regenerate}
             disabled={regenerating}
-            className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-accent disabled:opacity-60"
+            className="press-accent-link flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-accent disabled:opacity-60"
           >
             <span
               className={
@@ -140,17 +150,17 @@ export function TranslationEditor({
                 (regenerating ? "animate-spin" : "")
               }
             />
-            Régénérer le texte
+            Générer un nouveau texte
           </button>
         ) : (
           <button
             type="button"
             onClick={() => setUpsellOpen(true)}
             title="Réservé à Versus Upper"
-            className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-muted-lighter"
+            className="press-icon flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-muted-lighter"
           >
             <LockIcon size={13} />
-            Régénérer le texte
+            Générer un nouveau texte
           </button>
         )}
       </div>
@@ -184,7 +194,7 @@ export function TranslationEditor({
         <button
           type="button"
           onClick={() => router.push("/training")}
-          className="cursor-pointer text-[13px] font-medium text-ink-40"
+          className="press-link cursor-pointer text-[13px] font-medium text-ink-40"
         >
           ← Retour aux critères
         </button>
@@ -196,7 +206,7 @@ export function TranslationEditor({
           className={
             "flex h-[52px] w-[52px] items-center justify-center rounded-2xl font-serif text-[22px] font-semibold " +
             (canSubmit
-              ? "cursor-pointer bg-[oklch(0.4_0.11_200)] text-white"
+              ? "press-teal cursor-pointer bg-[oklch(0.4_0.11_200)] text-white"
               : "cursor-not-allowed border border-border-strong bg-white text-muted-ghost")
           }
         >

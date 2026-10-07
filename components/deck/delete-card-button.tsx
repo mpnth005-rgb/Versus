@@ -27,7 +27,7 @@ export function DeleteCardButton({ cardId }: { cardId: string }) {
         type="button"
         onClick={() => setOpen(true)}
         title="Supprimer"
-        className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-border-strong text-[11px] text-[oklch(0.55_0.13_25)]"
+        className="press-danger-icon flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-border-strong text-[11px] text-[oklch(0.55_0.13_25)]"
       >
         ✕
       </button>
