@@ -14,7 +14,7 @@ import { scaledProgress, type ReportProgress } from "@/lib/progress-stream";
 //   2. generateReferenceTranslation — a sentence-aligned reference translation
 //   3. classifyTranslation       — compares the learner's translation to the
 //                                  reference and classifies errors into the
-//                                  fixed 9-category taxonomy. It NEVER
+//                                  fixed 10-category taxonomy. It NEVER
 //                                  computes a score — see lib/scoring.ts for
 //                                  why (the doc is explicit: a model that
 //                                  occasionally miscounts an addition
@@ -606,6 +606,10 @@ const suggestedCardSchema = z.object({
   front: z.string(),
   back: z.string(),
   category: errorTypeEnumSchema,
+  // Sentence of the text where the targeted error was made, so a refreshed
+  // card can keep aiming at that same mistake. Optional: older corrections
+  // don't have it.
+  sentenceNumber: z.number().int().positive().optional(),
 });
 
 const classificationSchema = z.object({
@@ -677,8 +681,12 @@ const classifyTool: Tool = {
             },
             back: { type: "string", description: "Traduction anglaise correcte." },
             category: errorTypeSchema,
+            sentenceNumber: {
+              type: "integer",
+              description: "Numéro de la phrase du texte où a été commise l'erreur que cette carte cible.",
+            },
           },
-          required: ["front", "back", "category"],
+          required: ["front", "back", "category", "sentenceNumber"],
         },
       },
     },
@@ -711,7 +719,7 @@ Traduction soumise par l'utilisateur (texte libre, à aligner toi-même sur la n
 ${params.userTranslation}
 """
 
-Compare la traduction utilisateur à la traduction de référence, phrase par phrase, et identifie les erreurs selon EXACTEMENT ces 9 catégories (n'en invente aucune autre, n'en fusionne aucune, et utilise le code exact — majuscules, underscores — dans le champ "type"/"category") : ${ERROR_TYPES.join(", ")}.
+Compare la traduction utilisateur à la traduction de référence, phrase par phrase, et identifie les erreurs selon EXACTEMENT ces ${ERROR_TYPES.length} catégories (n'en invente aucune autre, n'en fusionne aucune, et utilise le code exact — majuscules, underscores — dans le champ "type"/"category") : ${ERROR_TYPES.join(", ")}.
 
 - FAUTE_DE_TEMPS (${ERROR_TYPE_LABELS.FAUTE_DE_TEMPS}) : mauvais temps verbal.
 - CONTRESENS (${ERROR_TYPE_LABELS.CONTRESENS}) : sens contraire ou substantiellement différent du texte source (vérifie toujours le contexte avant de qualifier un terme de contresens).
@@ -722,6 +730,12 @@ Compare la traduction utilisateur à la traduction de référence, phrase par ph
 - CALQUE (${ERROR_TYPE_LABELS.CALQUE}) : traduction mot-à-mot d'une structure française qui n'existe pas ainsi en anglais.
 - TRADUCTION_INEXACTE (${ERROR_TYPE_LABELS.TRADUCTION_INEXACTE}) : sens proche mais imprécis, sans être un contresens.
 - FAUTE_DE_TON (${ERROR_TYPE_LABELS.FAUTE_DE_TON}) : registre ou ironie du texte source non restitués.
+- OMISSION (${ERROR_TYPE_LABELS.OMISSION}) : un élément de SENS du texte source (mot ou groupe de mots porteur de sens) qu'on ne retrouve nulle part dans la traduction. Une omission par élément de sens manquant.
+
+OMISSION — juge le sens, jamais le décompte des mots :
+- Ce n'est PAS une omission quand le sens est rendu autrement : mot implicite en anglais (« il se mit à courir » → « he started running »), redondance volontairement supprimée pour éviter un calque (« tout à fait », « bel et bien », « en effet »), sens porté par la structure (temps, préposition, ordre des mots), étoffement ou dépouillement voulu.
+- En cas de doute, ne compte PAS d'omission.
+- Une phrase du texte source absente de la traduction, ou remplacée par un texte sans rapport avec elle (hors-sujet) : relève une OMISSION par groupe de sens de cette phrase (sujet, verbe, compléments…), chacune avec une explication d'une seule phrase, et aucune autre erreur pour cette phrase.
 
 IMPORTANT — la traduction de référence est UN exemple valide, pas l'unique bonne réponse. N'attribue AUCUNE erreur du seul fait qu'une phrase s'écarte de la formulation de la référence : si la phrase de l'utilisateur est grammaticalement correcte, fidèle au sens et au registre du texte source, elle ne doit recevoir aucune pénalité, même si elle est formulée très différemment de la référence. Compare chaque phrase au texte source, jamais mot à mot à la référence.
 
@@ -769,16 +783,43 @@ const suggestCardTool: Tool = {
   },
 };
 
+/** The learner's actual mistake behind a card, when it can be found. */
+export type CardErrorContext = {
+  sourceSentence: string;
+  userSentence: string;
+  referenceSentence: string | null;
+  explanations: string[];
+};
+
 export async function suggestReplacementCard(params: {
   errorType: ErrorType;
-  previousFront?: string;
+  // Every sentence already proposed for this card, oldest first.
+  previousFronts: string[];
+  error?: CardErrorContext;
 }): Promise<SuggestedCard> {
+  const errorBlock = params.error
+    ? `
+Erreur réellement commise par l'apprenant (la nouvelle phrase doit cibler CE point précis — même mot, même tournure ou même règle —, pas seulement la catégorie en général) :
+- Phrase source (français) : "${params.error.sourceSentence}"
+- Traduction de l'apprenant : "${params.error.userSentence}"${
+        params.error.referenceSentence ? `\n- Traduction de référence : "${params.error.referenceSentence}"` : ""
+      }
+- Explication de la correction : ${params.error.explanations.join(" / ")}
+`
+    : "";
+  const previousBlock =
+    params.previousFronts.length > 0
+      ? `
+Phrases déjà proposées pour cette carte — n'en répète aucune et ne les reformule pas de façon très proche :
+${params.previousFronts.map((f) => `- "${f}"`).join("\n")}
+`
+      : "";
+
   const prompt = `Tu es un générateur de phrases d'exercice pour une plateforme d'entraînement à la traduction FR → EN.
 
 Type d'erreur ciblé : ${params.errorType}
-${params.previousFront ? `Phrase précédemment générée pour ce même point (à ne pas répéter, ni reformuler de façon très proche) : "${params.previousFront}"` : ""}
-
-Génère UNE nouvelle phrase française courte (5-15 mots), autonome, qui isole clairement le point de difficulté correspondant à ce type d'erreur, accompagnée de sa traduction anglaise correcte. Cette phrase doit être totalement indépendante de tout contexte d'exercice (pas de thème, niveau ou registre imposé) — choisis la formulation la plus simple et la plus directe possible.
+${errorBlock}${previousBlock}
+Génère UNE nouvelle phrase française courte (5-15 mots), autonome, qui isole clairement ce point de difficulté, accompagnée de sa traduction anglaise correcte. Cette phrase doit être indépendante du texte de l'exercice (ne reprends pas sa phrase ni son sujet) — choisis la formulation la plus simple et la plus directe possible pour faire travailler ce point.
 
 Appelle l'outil submit_card avec le résultat (category = "${params.errorType}").`;
 

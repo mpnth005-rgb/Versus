@@ -146,7 +146,7 @@ export function TranslationEditor({
           >
             <span
               className={
-                "h-4 w-4 rounded-full border-2 border-accent border-t-transparent " +
+                "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-300 " +
                 (regenerating ? "animate-spin" : "")
               }
             />
@@ -207,7 +207,7 @@ export function TranslationEditor({
             "flex h-[52px] w-[52px] items-center justify-center rounded-2xl font-serif text-[22px] font-semibold " +
             (canSubmit
               ? "press-teal cursor-pointer bg-[oklch(0.4_0.11_200)] text-white"
-              : "cursor-not-allowed border border-border-strong bg-white text-muted-ghost")
+              : "cursor-default border border-border-strong bg-white text-muted-ghost")
           }
         >
           V

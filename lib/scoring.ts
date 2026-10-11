@@ -19,7 +19,8 @@ export type ErrorType =
   | "FAUTE_DE_SYNTAXE"
   | "CALQUE"
   | "TRADUCTION_INEXACTE"
-  | "FAUTE_DE_TON";
+  | "FAUTE_DE_TON"
+  | "OMISSION";
 
 export const ERROR_TYPES: ErrorType[] = [
   "FAUTE_DE_TEMPS",
@@ -31,6 +32,7 @@ export const ERROR_TYPES: ErrorType[] = [
   "CALQUE",
   "TRADUCTION_INEXACTE",
   "FAUTE_DE_TON",
+  "OMISSION",
 ];
 
 export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
@@ -43,6 +45,7 @@ export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
   CALQUE: "Calque",
   TRADUCTION_INEXACTE: "Traduction inexacte",
   FAUTE_DE_TON: "Faute de ton",
+  OMISSION: "Omission",
 };
 
 const NOTE_MAX = 20;
@@ -57,6 +60,10 @@ const PENALTY_TABLE: Record<ErrorType, number> = {
   CALQUE: 0.5,
   TRADUCTION_INEXACTE: 0.25,
   FAUTE_DE_TON: 0.25,
+  // Official scale: an element of meaning left untranslated costs 4 points
+  // (so an off-topic translation ends at 0). Like every penalty, it is then
+  // weighted by the level coefficient.
+  OMISSION: 4,
 };
 
 // Penalties are quarter-point increments, so results are always exact at

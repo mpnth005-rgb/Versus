@@ -141,7 +141,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
                 type="button"
                 disabled={index === 0}
                 onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ‹
               </button>
@@ -152,7 +152,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
                 type="button"
                 disabled={index === data.sentences.length - 1}
                 onClick={() => setIndex((i) => Math.min(data.sentences.length - 1, i + 1))}
-                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ›
               </button>
@@ -206,7 +206,7 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
                 disabled={referenceSide === side}
                 onClick={() => setReferenceSide(side)}
                 aria-label={side === "fr" ? "Texte de référence (français)" : "Traduction de référence (anglais)"}
-                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-not-allowed disabled:border-border-soft disabled:text-muted-ghost"
+                className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
                 {side === "fr" ? "‹" : "›"}
               </button>

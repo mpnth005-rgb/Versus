@@ -372,14 +372,20 @@ export function ReviewSession({
                   </div>
                 </div>
                 <div className="h-px bg-border-soft" />
-                {attempt.trim() && (
-                  <div>
-                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-light">
-                      Votre réponse
-                    </div>
-                    <div className="text-base leading-[1.6] text-ink-softer">{attempt}</div>
+                {/* Always shown, so the card keeps the same size; without an
+                    answer, a muted note stands in for it. */}
+                <div>
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-light">
+                    Votre réponse
                   </div>
-                )}
+                  {attempt.trim() ? (
+                    <div className="text-base leading-[1.6] text-ink-softer">{attempt}</div>
+                  ) : (
+                    <div className="text-base leading-[1.6] italic text-muted-lighter">
+                      Aucune réponse saisie
+                    </div>
+                  )}
+                </div>
                 <div>
                   <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-accent">
                     Traduction de référence

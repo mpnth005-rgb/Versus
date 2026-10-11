@@ -233,7 +233,7 @@ export function CriteriaForm({
             className={
               "press-primary rounded-lg px-7 py-3.5 text-[15px] font-semibold " +
               (disabled
-                ? "cursor-not-allowed bg-paper-alt-3 text-muted-ghost"
+                ? "cursor-default bg-paper-alt-3 text-muted-ghost"
                 : "cursor-pointer bg-ink text-white")
             }
           >

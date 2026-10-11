@@ -106,6 +106,30 @@ body {
 
 
 
+/* Loading screen: three tips take turns under the bar, each fading in and
+   out: a 24 s cycle, so 8 s per tip. */
+@keyframes load-a {
+  0%, 4% { opacity: 0; }
+  9%, 29% { opacity: 1; }
+  34%, 100% { opacity: 0; }
+}
+
+@keyframes load-b {
+  0%, 33% { opacity: 0; }
+  38%, 62% { opacity: 1; }
+  67%, 100% { opacity: 0; }
+}
+
+@keyframes load-c {
+  0%, 66% { opacity: 0; }
+  71%, 96% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-load-a { animation: load-a 24s ease-in-out infinite; }
+.animate-load-b { animation: load-b 24s ease-in-out infinite; }
+.animate-load-c { animation: load-c 24s ease-in-out infinite; }
+
 /* ------------------------------------------------------------------------
    Button states (hover / pressed), from the "Prototype Entraînement"
    design. Unlayered on purpose: unlayered rules beat Tailwind's utilities
@@ -175,9 +199,11 @@ body {
 .press-quota:hover { background-color: oklch(0.93 0.005 90); }
 .press-quota:active { background-color: oklch(0.9 0.005 90); }
 
-/* Accent text button (Régénérer le texte) */
-.press-accent-link:hover:not(:disabled) { background-color: oklch(0.92 0.03 200); color: oklch(0.32 0.09 200); }
-.press-accent-link:active:not(:disabled) { background-color: oklch(0.86 0.05 200); }
+/* Accent text buttons (Générer un nouveau texte / une nouvelle phrase) */
+.press-accent-link:hover:not(:disabled) { color: oklch(0.32 0.09 200); }
+.press-accent-link:active:not(:disabled) { opacity: 0.6; }
+/* Its circular-arrow icon turns half a turn on hover. */
+.press-accent-link:hover:not(:disabled) .refresh-ring { transform: rotate(180deg); }
 
 /* Clickable cards (subscription plans) */
 .press-card:hover:not(:disabled) { background-color: oklch(0.98 0.005 90); }

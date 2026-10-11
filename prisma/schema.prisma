@@ -200,7 +200,7 @@ model Translation {
 }
 
 // Correction for an exercise. The AI (lib/ai.ts, "Appel 3") only
-// classifies errors into the fixed 9-category taxonomy — it never
+// classifies errors into the fixed 10-category taxonomy — it never
 // computes a score. overallScore/adjustedScore are always derived
 // server-side (lib/scoring.ts) from the fixed penalty table, so the
 // model can't silently get an addition wrong. sentenceCorrections and

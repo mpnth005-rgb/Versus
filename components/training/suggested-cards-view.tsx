@@ -163,7 +163,7 @@ export function SuggestedCardsView({
                 >
                   <span
                     className={
-                      "h-4 w-4 rounded-full border-2 border-accent border-t-transparent " +
+                      "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-300 " +
                       (isRefreshing ? "animate-spin" : "")
                     }
                   />

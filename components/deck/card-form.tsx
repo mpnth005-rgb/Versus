@@ -100,7 +100,7 @@ export function CardForm({
           className={
             "rounded-lg border px-5 py-[11px] text-[13.5px] font-semibold " +
             (!front.trim() || !back.trim()
-              ? "cursor-not-allowed border-paper-alt-3 bg-paper-alt-3 text-[oklch(0.65_0.01_90)]"
+              ? "cursor-default border-paper-alt-3 bg-paper-alt-3 text-[oklch(0.65_0.01_90)]"
               : "press-primary cursor-pointer border-ink bg-ink text-white")
           }
         >
