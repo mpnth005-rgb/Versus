@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { getReviewQueue, getSrsConfig } from "@/lib/deck";
+import { getUserQuota, getDeckChecksRemaining } from "@/lib/quota";
 import { ReviewSession, type QueueCard } from "@/components/deck/review-session";
 
 type FlashcardRow = Awaited<ReturnType<typeof getReviewQueue>>["newCards"][number];
@@ -16,6 +17,7 @@ function toQueueCard(c: FlashcardRow): QueueCard {
     intervalDays: c.intervalDays,
     easeFactor: c.easeFactor,
     dueAt: c.dueAt.toISOString(),
+    category: c.category,
   };
 }
 
@@ -23,8 +25,13 @@ export default async function DeckPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [{ newCards, learningCards, reviewCards, dailyNewCardLimit, introducedToday }, srsConfig] =
-    await Promise.all([getReviewQueue(session.user.id), getSrsConfig(session.user.id)]);
+  const [{ newCards, learningCards, reviewCards, dailyNewCardLimit, introducedToday }, srsConfig, quota] =
+    await Promise.all([
+      getReviewQueue(session.user.id),
+      getSrsConfig(session.user.id),
+      getUserQuota(session.user.id),
+    ]);
+  const checksRemaining = await getDeckChecksRemaining(session.user.id, quota.isPremium);
 
   return (
     <ReviewSession
@@ -37,6 +44,7 @@ export default async function DeckPage() {
       dailyNewCardLimit={dailyNewCardLimit}
       introducedToday={introducedToday}
       srsConfig={srsConfig}
+      checksRemaining={checksRemaining}
     />
   );
 }

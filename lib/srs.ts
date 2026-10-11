@@ -138,8 +138,10 @@ function processLearning(
       return { schedule, dueAt: new Date(now + intervalDays * DAY_MS), unit: "days" };
     }
     case "EASY": {
+      // Leaving relearning, Correcte returns to the minimum interval; like
+      // Anki, Facile always gives at least one day more.
       const intervalDays = cameFromRevision
-        ? config.minimumIntervalDays
+        ? config.minimumIntervalDays + 1
         : config.easyIntervalDays;
       const schedule = graduate(intervalDays, card.easeFactor);
       return { schedule, dueAt: new Date(now + intervalDays * DAY_MS), unit: "days" };

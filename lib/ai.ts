@@ -9,7 +9,7 @@ import { THEME_TREE } from "@/lib/subtopics";
 import { FIRST_NAMES, LAST_NAMES } from "@/lib/names";
 import { scaledProgress, type ReportProgress } from "@/lib/progress-stream";
 
-// 4 calls, matching "Prompts système IA" 1:1:
+// 5 calls; the first 4 match "Prompts système IA" 1:1:
 //   1. generateExerciseText      — the French source text
 //   2. generateReferenceTranslation — a sentence-aligned reference translation
 //   3. classifyTranslation       — compares the learner's translation to the
@@ -21,6 +21,8 @@ import { scaledProgress, type ReportProgress } from "@/lib/progress-stream";
 //                                  corrupts scores silently).
 //   4. suggestReplacementCard    — one decontextualized practice sentence
 //                                  for a single error type.
+//   5. checkDeckAnswer           — indicative verdict on a deck answer
+//                                  (added since, not in the doc).
 
 /**
  * The model occasionally writes an array field of a tool call as a JSON
@@ -38,7 +40,20 @@ function lenientArray<T extends z.ZodType>(array: T) {
   }, array);
 }
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+// One model per call, each overridable from the environment. Writing and
+// grading (generation, reference translation, correction) keep a strong
+// model; short, frequent tasks (a card's new sentence, checking a deck
+// answer) use a fast, cheap one. The news option's web search needs a
+// recent Sonnet/Opus model, so generation must stay on one of those.
+const STRONG_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+const FAST_MODEL = process.env.ANTHROPIC_MODEL_FAST || "claude-haiku-4-5-20251001";
+const MODELS = {
+  generation: process.env.ANTHROPIC_MODEL_GENERATION || STRONG_MODEL,
+  reference: process.env.ANTHROPIC_MODEL_REFERENCE || STRONG_MODEL,
+  correction: process.env.ANTHROPIC_MODEL_CORRECTION || STRONG_MODEL,
+  card: process.env.ANTHROPIC_MODEL_CARD || FAST_MODEL,
+  deckCheck: process.env.ANTHROPIC_MODEL_DECK_CHECK || FAST_MODEL,
+};
 
 export class AiNotConfiguredError extends Error {
   constructor() {
@@ -106,6 +121,7 @@ function trackWriting(
  * instructions (e.g. "fais varier...") to get variety instead.
  */
 async function completeWithTool(
+  model: string,
   prompt: string,
   tool: Tool,
   maxTokens: number,
@@ -113,7 +129,7 @@ async function completeWithTool(
 ): Promise<unknown> {
   const client = getClient();
   const stream = client.messages.stream({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
     tools: [tool],
@@ -176,7 +192,7 @@ async function completeWithWebSearch(
 
     for (let turn = 0; turn <= MAX_CONTINUATIONS; turn++) {
       const stream = client.messages.stream({
-        model: MODEL,
+        model: MODELS.generation,
         max_tokens: maxTokens,
         messages,
         tools: [{ type: "web_search_20260209", name: "web_search", max_uses: MAX_SEARCHES }, tool],
@@ -459,7 +475,7 @@ Appelle l'outil submit_exercise avec le résultat.`;
   };
   const result = params.anchoredInNews
     ? await completeWithWebSearch(prompt, generateExerciseTool, 4000, progress)
-    : await completeWithTool(prompt, generateExerciseTool, 1500, progress);
+    : await completeWithTool(MODELS.generation, prompt, generateExerciseTool, 1500, progress);
   return generatedExerciseSchema.parse(result);
 }
 
@@ -567,6 +583,7 @@ Appelle l'outil submit_reference_translation avec le résultat.`;
   // about the same length), plus ~55 characters of JSON per sentence.
   const sentences = Math.max(1, sourceText.split(/[.!?…]+(?:\s|$)/).filter((x) => x.trim()).length);
   const result = await completeWithTool(
+    MODELS.reference,
     prompt,
     generateReferenceTool,
     3000,
@@ -751,6 +768,7 @@ Appelle l'outil submit_classification avec le résultat.`;
   // (explanations ~300 chars) and cards vary, so these are averages.
   const sentences = params.reference.phrases.length;
   const result = await completeWithTool(
+    MODELS.correction,
     prompt,
     classifyTool,
     10000,
@@ -823,6 +841,68 @@ Génère UNE nouvelle phrase française courte (5-15 mots), autonome, qui isole 
 
 Appelle l'outil submit_card avec le résultat (category = "${params.errorType}").`;
 
-  const result = await completeWithTool(prompt, suggestCardTool, 500);
+  const result = await completeWithTool(MODELS.card, prompt, suggestCardTool, 500);
   return suggestedCardSchema.parse(result);
+}
+
+// ---------------------------------------------------------------------------
+// Appel 5 — Indicative check of a deck answer (on demand, during review)
+// ---------------------------------------------------------------------------
+
+export const DECK_VERDICTS = ["CORRECT", "PRESQUE", "ERREUR"] as const;
+export type DeckVerdict = (typeof DECK_VERDICTS)[number];
+
+const deckCheckSchema = z.object({
+  verdict: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().toUpperCase() : v),
+    z.enum(DECK_VERDICTS)
+  ),
+  explanation: z.string().min(1),
+});
+
+export type DeckCheck = z.infer<typeof deckCheckSchema>;
+
+const deckCheckTool: Tool = {
+  name: "submit_check",
+  description: "Submit the verdict on the learner's translation of a flashcard.",
+  input_schema: {
+    type: "object",
+    properties: {
+      verdict: {
+        type: "string",
+        enum: [...DECK_VERDICTS],
+        description:
+          "CORRECT : sens et point travaillé justes (une formulation différente de la référence est acceptée). PRESQUE : sens globalement juste, petite imprécision. ERREUR : contresens, omission ou point travaillé manqué.",
+      },
+      explanation: {
+        type: "string",
+        description: "Une seule phrase, en français, centrée sur le point travaillé par la carte.",
+      },
+    },
+    required: ["verdict", "explanation"],
+  },
+};
+
+/** A short, indicative verdict — never a score: the learner still rates the
+ * card themselves. */
+export async function checkDeckAnswer(params: {
+  front: string;
+  back: string;
+  answer: string;
+  category?: ErrorType | null;
+}): Promise<DeckCheck> {
+  const prompt = `Tu vérifies, à titre indicatif, la traduction FR → EN qu'un apprenant a tapée pendant une révision de cartes.
+
+Phrase française : "${params.front}"
+Traduction de référence : "${params.back}"
+Traduction de l'apprenant : "${params.answer}"${
+    params.category ? `\nPoint travaillé par cette carte : ${ERROR_TYPE_LABELS[params.category]}.` : ""
+  }
+
+La référence est UN exemple valide, pas l'unique bonne réponse : une formulation différente mais correcte et fidèle au sens est CORRECT. Juge le sens et la correction de l'anglais, en particulier le point travaillé, pas l'écart à la référence. Ignore la ponctuation finale et les majuscules.
+
+Appelle l'outil submit_check avec ton verdict et une seule phrase d'explication en français.`;
+
+  const result = await completeWithTool(MODELS.deckCheck, prompt, deckCheckTool, 300);
+  return deckCheckSchema.parse(result);
 }

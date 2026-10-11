@@ -2,6 +2,8 @@ export const FREE_MONTHLY_EXERCISE_LIMIT = 7;
 export const FREE_MAX_CARDS_PER_EXERCISE = 3;
 export const DEFAULT_DAILY_NEW_CARD_LIMIT = 10;
 export const MAX_DAILY_NEW_CARDS = 30;
+// "Vérifier ma réponse" in the deck: unlimited on Versus Upper.
+export const FREE_DAILY_DECK_CHECKS = 5;
 
 export const TEXT_TYPE_LABELS: Record<string, string> = {
   LITERARY: "Littéraire",

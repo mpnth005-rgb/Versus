@@ -37,14 +37,12 @@ export async function POST(
   const maxCards = quota.isPremium ? Infinity : FREE_MAX_CARDS_PER_EXERCISE;
   const selectedIndexes = [...new Set(parsed.data.selected)].slice(0, maxCards);
 
-  const suggestedCards = exercise.correction.suggestedCards as Array<{
-    front: string;
-    back: string;
-  }>;
+  type Suggested = { front: string; back: string; category?: string };
+  const suggestedCards = exercise.correction.suggestedCards as Suggested[];
 
   const cardsToCreate = selectedIndexes
     .map((i) => suggestedCards[i])
-    .filter((card): card is { front: string; back: string } => Boolean(card));
+    .filter((card): card is Suggested => Boolean(card));
 
   await prisma.$transaction([
     ...cardsToCreate.map((card) =>
@@ -53,6 +51,8 @@ export async function POST(
           userId: session.user.id,
           front: card.front,
           back: card.back,
+          // Kept for the deck answer check ("Vérifier ma réponse").
+          category: card.category ?? null,
           sourceExerciseId: id,
         },
       })

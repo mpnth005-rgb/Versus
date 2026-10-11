@@ -32,6 +32,7 @@ model User {
   exercises     Exercise[]
   flashcards    Flashcard[]
   monthlyUsages MonthlyUsage[]
+  deckCheckUsages DeckCheckUsage[]
 }
 
 model Account {
@@ -111,6 +112,19 @@ model MonthlyUsage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, yearMonth])
+}
+
+// Deck answer checks used per study day (free plan: limited, see
+// FREE_DAILY_DECK_CHECKS). A study day rolls over at 4 a.m. like the deck.
+model DeckCheckUsage {
+  id         String @id @default(cuid())
+  userId     String
+  studyDay   String // "2026-10-11", the date of the study day's 4 a.m.
+  checksUsed Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, studyDay])
 }
 
 // SRS parameters are per-user and DB-configurable (see lib/srs.ts) — no
@@ -253,6 +267,9 @@ model Flashcard {
   // When the card was first rated (left NEW). Counts it against the
   // daily new-card quota for that study day (lib/deck.ts).
   introducedAt     DateTime?
+  // Error type of the suggested card it came from (null for manual cards),
+  // given to the deck answer check (lib/ai.ts, checkDeckAnswer).
+  category         String?
   sourceExerciseId String?
   createdAt        DateTime  @default(now())
 
