@@ -1,4 +1,4 @@
-// Shown under the loading bar while the AI works: three of them, drawn at
+// Shown under the loading bar while the AI works: five of them, drawn at
 // random for each loading (components/loading-screen.tsx).
 export const LOADING_TIPS = [
   // Conseils de traduction
@@ -12,6 +12,18 @@ export const LOADING_TIPS = [
   "Gardez le ton du texte source : un article ne s'écrit pas comme un récit.",
   "Relisez votre traduction comme un texte anglais, sans regarder le français.",
   "Si une phrase sonne étrange en anglais, c'est souvent un calque.",
+  "Un nom pris au sens général n'a pas d'article en anglais : « la nature » devient « nature ».",
+  "« Il y a deux ans » se traduit par « two years ago », pas par « there are two years ».",
+  "« Venir de faire » se rend souvent par « have just » : « I have just arrived ».",
+  "Avec une partie du corps, l'anglais emploie le possessif : « he broke his arm ».",
+  "En anglais, les jours, les mois et les nationalités prennent une majuscule.",
+  "« On » se traduit selon le contexte : « we », « people », « you » ou une forme passive.",
+  "« Si » suivi de l'imparfait appelle « if » suivi du prétérit : « if I had time ».",
+  "« Éventuellement » ne veut pas dire « eventually », qui signifie « finalement ».",
+  "Une « librairie » est une « bookshop » ; une « library » est une bibliothèque.",
+  "En anglais, l'adjectif se place avant le nom : « a difficult choice ».",
+  "Les nombres décimaux s'écrivent avec un point en anglais : « 2.5 », pas « 2,5 ».",
+  "« Faire » se traduit par « make » ou « do » selon l'expression : on apprend les deux par cœur.",
   // Comment fonctionne Versus
   "Votre traduction est comparée au texte source, pas mot à mot à la référence.",
   "Une formulation différente de la référence n'est pas une erreur si le sens est juste.",
@@ -22,6 +34,15 @@ export const LOADING_TIPS = [
   "Vous pouvez ajuster le nombre de nouvelles cartes par jour depuis le deck.",
   "Votre progression par niveau et par type de texte est visible dans « Progression ».",
   "L'option « Ancrer dans l'actualité » s'appuie sur des recherches récentes sur internet.",
+  "Chaque texte fait entre 130 et 170 mots : assez pour travailler, assez court pour une séance.",
+  "Le score ajusté tient compte du niveau du texte : les erreurs pèsent plus en A2 qu'en C1.",
+  "Un élément de sens oublié compte comme une omission, l'erreur la plus lourde du barème.",
+  "Ne pas traduire un mot n'est pas une omission si son sens est rendu autrement.",
+  "Dans le deck, votre réponse est corrigée automatiquement quand la carte se retourne.",
+  "La touche Entrée retourne la carte en révision, sans quitter le clavier.",
+  "Une carte notée « À revoir » revient dans la même séance, quelques minutes plus tard.",
+  "Vous pouvez générer une nouvelle phrase pour une carte suggérée qui ne vous convient pas.",
+  "Votre historique d'exercices reste consultable depuis la page « Progression ».",
   // Avertissements
   "La correction est faite par une IA : elle peut parfois se tromper.",
   "Les textes ancrés dans l'actualité peuvent contenir des imprécisions : vérifiez les faits importants.",
@@ -30,4 +51,8 @@ export const LOADING_TIPS = [
   // Motivation
   "Un texte par jour vaut mieux que sept le dimanche.",
   "Revoir ses erreurs est la façon la plus rapide de progresser.",
+  "Quelques minutes de révision chaque jour valent mieux qu'une longue séance par semaine.",
+  "Une erreur relevée aujourd'hui est une erreur que vous ne referez plus demain.",
+  "Traduire, c'est d'abord comprendre : lisez le texte en entier avant de commencer.",
+  "Plus vous lisez en anglais, plus les tournures justes vous viendront naturellement.",
 ];

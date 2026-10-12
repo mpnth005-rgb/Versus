@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MAX_CARD_CHARS } from "@/lib/constants";
 
 export function CardForm({
   mode,
@@ -17,6 +18,12 @@ export function CardForm({
   const router = useRouter();
   const [front, setFront] = useState(initialFront);
   const [back, setBack] = useState(initialBack);
+  const backRef = useRef<HTMLTextAreaElement>(null);
+
+  // Entrée (avec ou sans Maj) passe du recto au verso, puis ajoute /
+  // enregistre la carte depuis le verso: no line breaks in a card.
+  const isEnter = (e: React.KeyboardEvent) =>
+    e.key === "Enter" && !e.nativeEvent.isComposing;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +71,13 @@ export function CardForm({
           </div>
           <textarea
             value={front}
+            maxLength={MAX_CARD_CHARS}
             onChange={(e) => setFront(e.target.value)}
+            onKeyDown={(e) => {
+              if (!isEnter(e)) return;
+              e.preventDefault();
+              backRef.current?.focus();
+            }}
             placeholder="Une phrase en français à mémoriser…"
             rows={2}
             className="min-h-16 font-serif text-[15.5px] text-[oklch(0.25_0.01_90)] resize-y rounded-lg border border-border-strong bg-white px-[18px] py-4 outline-none transition-[border-color,box-shadow] duration-150 focus:border-[oklch(0.45_0.09_200)] focus:shadow-[0_0_0_1px_oklch(0.45_0.09_200)]"
@@ -75,8 +88,15 @@ export function CardForm({
             Verso <span className="font-normal text-muted-light">(traduction)</span>
           </div>
           <textarea
+            ref={backRef}
             value={back}
+            maxLength={MAX_CARD_CHARS}
             onChange={(e) => setBack(e.target.value)}
+            onKeyDown={(e) => {
+              if (!isEnter(e)) return;
+              e.preventDefault();
+              if (!pending) submit();
+            }}
             placeholder="Its English translation…"
             rows={2}
             className="min-h-16 text-[15px] text-ink-softer resize-y rounded-lg border border-border-strong bg-white px-[18px] py-4 outline-none transition-[border-color,box-shadow] duration-150 focus:border-[oklch(0.45_0.09_200)] focus:shadow-[0_0_0_1px_oklch(0.45_0.09_200)]"

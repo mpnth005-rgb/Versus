@@ -6,10 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { checkDeckAnswer, AiNotConfiguredError } from "@/lib/ai";
 import { getUserQuota, getDeckChecksRemaining, consumeDeckCheck } from "@/lib/quota";
 import { ERROR_TYPES, type ErrorType } from "@/lib/scoring";
+import { MAX_DECK_ANSWER_CHARS } from "@/lib/constants";
 
 const bodySchema = z.object({
   cardId: z.string().min(1),
-  answer: z.string().trim().min(1).max(1000),
+  answer: z.string().trim().min(1).max(MAX_DECK_ANSWER_CHARS),
 });
 
 /** "Vérifier ma réponse" during a review: a short, indicative verdict. */

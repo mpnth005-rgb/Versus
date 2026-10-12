@@ -8,7 +8,7 @@ import { fetchWithProgress } from "@/lib/progress-stream";
 import { LockIcon } from "@/components/lock-icon";
 import { UpsellModal } from "@/components/upsell-modal";
 import { useTrainingSession } from "@/components/training-session";
-import { TEXT_TYPE_LABELS, LEVEL_LABELS } from "@/lib/constants";
+import { TEXT_TYPE_LABELS, LEVEL_LABELS, MAX_TRANSLATION_CHARS } from "@/lib/constants";
 
 export type EditorExercise = {
   id: string;
@@ -43,6 +43,9 @@ export function TranslationEditor({
   const translation = drafts[initial.id] ?? "";
   const setTranslation = (text: string) => setDraft(initial.id, text);
   const [regenerating, setRegenerating] = useState(false);
+  // Once a new text was generated, its title and text fade in (like a
+  // suggested card's new sentence).
+  const [regenerated, setRegenerated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export function TranslationEditor({
           anchoredInNews: refreshed.anchoredInNews,
         });
         setTranslation("");
+        setRegenerated(true);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Une erreur est survenue.");
@@ -115,7 +119,12 @@ export function TranslationEditor({
 
   return (
     <div className="flex flex-col gap-7 py-12 px-16">
-      <div className="font-serif text-2xl font-semibold text-ink">{exercise.title}</div>
+      <div
+        key={exercise.title}
+        className={"font-serif text-2xl font-semibold text-ink" + (regenerated ? " fade-in" : "")}
+      >
+        {exercise.title}
+      </div>
 
       <div className="-mt-3.5 flex items-center justify-between">
         <div className="flex gap-2.5">
@@ -146,7 +155,7 @@ export function TranslationEditor({
           >
             <span
               className={
-                "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-300 " +
+                "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-(--motion-base) " +
                 (regenerating ? "animate-spin" : "")
               }
             />
@@ -171,8 +180,13 @@ export function TranslationEditor({
             Texte source (français)
           </div>
           <div className="flex flex-1 flex-col justify-between gap-5 rounded-xl border border-border bg-white p-7 font-serif text-[17px] leading-[1.75] text-[oklch(0.25_0.01_90)]">
-            <div>{exercise.sourceText}</div>
-            <div className="text-right text-[12.5px] font-medium text-muted-light font-sans">
+            <div key={exercise.sourceText} className={regenerated ? "fade-in" : ""}>
+              {exercise.sourceText}
+            </div>
+            <div
+              key={exercise.wordCount}
+              className={"text-right text-[12.5px] font-medium text-muted-light font-sans" + (regenerated ? " fade-in" : "")}
+            >
               {exercise.wordCount} mots
             </div>
           </div>
@@ -183,6 +197,7 @@ export function TranslationEditor({
           </div>
           <textarea
             value={translation}
+            maxLength={MAX_TRANSLATION_CHARS}
             onChange={(e) => setTranslation(e.target.value)}
             placeholder="Tapez votre traduction ici..."
             className="min-h-[220px] flex-1 resize-none rounded-xl border-2 border-accent bg-white p-7 text-base leading-[1.75] text-ink-softer outline-none"

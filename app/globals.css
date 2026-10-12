@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
 :root {
+  /* Motion: three durations, three curves, shared by every animation.
+     fast = micro-reactions (buttons), base = transitions (modals, sidebar,
+     selectors), slow = content that moves (chart line, bars, cards).
+     move = something changing place/size, enter = something arriving,
+     exit = something leaving (accelerates away). */
+  --motion-fast: 0.15s;
+  --motion-base: 0.3s;
+  --motion-slow: 0.45s;
+  --ease-move: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.5, 0, 0.75, 0);
+
   /* Neutral "ink & paper" scale */
   --color-paper: oklch(0.98 0.005 90);
   --color-paper-alt: oklch(0.96 0.005 90);
@@ -106,29 +118,16 @@ body {
 
 
 
-/* Loading screen: three tips take turns under the bar, each fading in and
-   out: a 24 s cycle, so 8 s per tip. */
-@keyframes load-a {
-  0%, 4% { opacity: 0; }
-  9%, 29% { opacity: 1; }
-  34%, 100% { opacity: 0; }
+/* Loading screen: five tips take turns under the bar, 8 s each (a 40 s
+   cycle): each fades in, stays ~5 s, fades out. One keyframe for all five,
+   staggered by an 8 s delay per tip (set inline, components/loading-screen.tsx). */
+@keyframes load-tip {
+  0%, 2.4% { opacity: 0; }
+  5.4%, 17.4% { opacity: 1; }
+  20.4%, 100% { opacity: 0; }
 }
 
-@keyframes load-b {
-  0%, 33% { opacity: 0; }
-  38%, 62% { opacity: 1; }
-  67%, 100% { opacity: 0; }
-}
-
-@keyframes load-c {
-  0%, 66% { opacity: 0; }
-  71%, 96% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-.animate-load-a { animation: load-a 24s ease-in-out infinite; }
-.animate-load-b { animation: load-b 24s ease-in-out infinite; }
-.animate-load-c { animation: load-c 24s ease-in-out infinite; }
+.animate-load-tip { opacity: 0; animation: load-tip 40s ease-in-out infinite both; }
 
 /* ------------------------------------------------------------------------
    Button states (hover / pressed), from the "Prototype Entraînement"
@@ -150,13 +149,13 @@ body {
 .press-card,
 .press-switch {
   transition:
-    background-color 0.15s,
-    border-color 0.15s,
-    color 0.15s,
-    filter 0.15s,
-    box-shadow 0.15s,
-    opacity 0.15s,
-    transform 0.08s;
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    filter var(--motion-fast),
+    box-shadow var(--motion-fast),
+    opacity var(--motion-fast),
+    transform calc(var(--motion-fast) / 2);
 }
 
 /* Dark primary button (Générer le texte, Confirmer, J'ai compris…) */
@@ -213,20 +212,20 @@ body {
 .press-switch:hover { box-shadow: 0 0 0 4px oklch(0.94 0.005 90); }
 
 /* ------------------------------------------------------------------------
-   Modals: the backdrop fades in (0.28s) while the panel rises from 12px
-   below at 98% scale (0.32s); closing plays it in reverse (see Modal).
+   Modals: the backdrop fades in while the panel rises from 12px below at
+   98% scale; closing plays it in reverse (see Modal).
    ------------------------------------------------------------------------ */
 @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes modal-panel-in { from { transform: translateY(12px) scale(0.98); } to { transform: none; } }
 @keyframes modal-panel-out { from { transform: none; } to { transform: translateY(12px) scale(0.98); } }
-.modal-backdrop-in { animation: modal-backdrop-in 0.28s cubic-bezier(0.4, 0, 0.2, 1) both; }
-.modal-backdrop-out { animation: modal-backdrop-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both; }
-.modal-panel-in { animation: modal-panel-in 0.32s cubic-bezier(0.4, 0, 0.2, 1) both; }
-.modal-panel-out { animation: modal-panel-out 0.32s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.modal-backdrop-in { animation: modal-backdrop-in var(--motion-base) var(--ease-move) both; }
+.modal-backdrop-out { animation: modal-backdrop-out var(--motion-base) var(--ease-move) both; }
+.modal-panel-in { animation: modal-panel-in var(--motion-base) var(--ease-move) both; }
+.modal-panel-out { animation: modal-panel-out var(--motion-base) var(--ease-move) both; }
 
 /* Filter dropdown triggers (Niveau / Type) */
-.press-field { transition: background-color 0.15s, border-color 0.15s; }
+.press-field { transition: background-color var(--motion-fast), border-color var(--motion-fast); }
 .press-field:hover { background-color: oklch(0.98 0.005 90); border-color: oklch(0.75 0.01 90); }
 
 /* Review session (deck), as in the design prototype: a new card rises in;
@@ -241,15 +240,82 @@ body {
   100% { transform: perspective(1400px) rotateY(90deg); opacity: 0; }
 }
 @keyframes deck-rate-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.deck-card-in { animation: deck-card-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.deck-answer-in { animation: deck-rate-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s backwards; }
-.deck-flip-out { backface-visibility: hidden; animation: deck-flip-out 0.42s cubic-bezier(0.5, 0, 0.85, 0.35) 0.3s both; }
-.deck-fade-out { animation: deck-fade-out 0.28s ease forwards; }
-.deck-fade-out-late { animation: deck-fade-out 0.28s ease 0.04s forwards; }
-.deck-flip-in { backface-visibility: hidden; transform-origin: 50% 0; animation: deck-flip-in 0.5s cubic-bezier(0.15, 0.65, 0.3, 1) 0.72s backwards; }
-.deck-rates-in { animation: deck-rate-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 1.1s backwards; }
+.deck-card-in { animation: deck-card-in var(--motion-slow) var(--ease-enter); }
+.deck-answer-in { animation: deck-rate-in var(--motion-slow) var(--ease-enter) 0.1s backwards; }
+.deck-flip-out { backface-visibility: hidden; animation: deck-flip-out var(--motion-slow) var(--ease-exit) 0.3s both; }
+.deck-fade-out { animation: deck-fade-out var(--motion-base) ease forwards; }
+.deck-fade-out-late { animation: deck-fade-out var(--motion-base) ease 0.04s forwards; }
+.deck-flip-in { backface-visibility: hidden; transform-origin: 50% 0; animation: deck-flip-in 0.5s var(--ease-enter) 0.72s backwards; }
+.deck-rates-in { animation: deck-rate-in var(--motion-slow) var(--ease-enter) 1.1s backwards; }
 
 /* Bordered red icon button (✕ delete a card) */
-.press-danger-icon { transition: background-color 0.15s, border-color 0.15s; }
+.press-danger-icon { transition: background-color var(--motion-fast), border-color var(--motion-fast); }
 .press-danger-icon:hover { background-color: oklch(0.96 0.03 25); border-color: oklch(0.75 0.08 25); }
 .press-danger-icon:active { background-color: oklch(0.92 0.05 25); }
+
+/* ------------------------------------------------------------------------
+   Small content transitions, shared across pages:
+   - fade-in: content replaced in place (reference FR/EN, a refreshed
+     card's sentence, the deck verdict badge);
+   - slide-in-next / -prev: the correction's sentence, in the direction of
+     the arrow clicked;
+   - menu-in: dropdown menus (Niveau / Type), a light fade and drop.
+   ------------------------------------------------------------------------ */
+@keyframes slide-in-next { from { opacity: 0; transform: translateX(16px); } }
+@keyframes slide-in-prev { from { opacity: 0; transform: translateX(-16px); } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px); } }
+.fade-in { animation: rm-fade-in var(--motion-base) ease; }
+.slide-in-next { animation: slide-in-next var(--motion-base) var(--ease-enter); }
+.slide-in-prev { animation: slide-in-prev var(--motion-base) var(--ease-enter); }
+.menu-in { animation: menu-in var(--motion-fast) var(--ease-enter); }
+/* Cards replaced as a set (Niveau ↔ Type de texte), all together. */
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } }
+.rise-in { animation: rise-in var(--motion-base) var(--ease-enter) backwards; }
+
+/* ------------------------------------------------------------------------
+   "Réduire les animations" (OS accessibility setting): nothing moves any
+   more — no sliding, flipping, rising or flying — but changes still show
+   through short fades. Spinners and the loading bar's progress stay: they
+   carry information. Elements that move through inline styles carry a
+   motion-* class so they can be stilled here.
+   ------------------------------------------------------------------------ */
+@keyframes rm-fade-in { from { opacity: 0; } }
+@keyframes rm-fade-out { to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-base: 0.2s;
+    --motion-slow: 0.2s;
+  }
+
+  /* No press nudge, no turning icon */
+  [class*="press-"]:active { transform: none !important; }
+  .press-accent-link:hover .refresh-ring { transform: none; }
+
+  /* Modals: fade only */
+  .modal-panel-in { animation-name: rm-fade-in; }
+  .modal-panel-out { animation-name: rm-fade-out; }
+
+  /* Review session: cards cross-fade instead of rising, flipping, flying */
+  .deck-card-in,
+  .deck-answer-in { animation-name: rm-fade-in; }
+  .deck-fade-out,
+  .deck-fade-out-late { animation-name: rm-fade-out; }
+  .deck-flip-out { animation: rm-fade-out var(--motion-base) ease both; }
+  .deck-flip-in { animation: rm-fade-in var(--motion-base) ease 0.15s backwards; }
+  .deck-rates-in { animation: rm-fade-in var(--motion-base) ease 0.25s backwards; }
+  .motion-fly { transform: none !important; translate: none !important; }
+
+  /* Sidebar and period selector: open/close at once, content still fades */
+  .motion-collapse { transition-property: opacity !important; }
+  .motion-slide { transform: none !important; translate: none !important; }
+
+  /* Weekly bars: new heights at once */
+  .motion-bars { transition: none !important; }
+
+  /* Sliding sentence, dropping menu: fade only */
+  .slide-in-next,
+  .slide-in-prev,
+  .menu-in,
+  .rise-in { animation-name: rm-fade-in; }
+}

@@ -119,6 +119,9 @@ export function ProgressDashboard({
   );
   const [month, setMonth] = useState(() => months[months.length - 1] ?? yearMonthOf(now));
   const [groupDim, setGroupDim] = useState<Dimension>("level");
+  // Switching Niveau ↔ Type de texte: the new cards rise in together
+  // (nothing plays on first load).
+  const [groupSwitched, setGroupSwitched] = useState(false);
 
   // --- Headline cards -----------------------------------------------------
   const globalAvg = average(exercises.map((e) => e.score));
@@ -241,14 +244,24 @@ export function ProgressDashboard({
           <div className="text-sm font-semibold text-ink-softer">
             Score moyen par {groupDim === "level" ? "niveau" : "type de texte"}
           </div>
-          <Toggle value={groupDim} onChange={setGroupDim} />
+          <Toggle
+            value={groupDim}
+            onChange={(dim) => {
+              setGroupDim(dim);
+              setGroupSwitched(true);
+            }}
+          />
         </div>
         <div
+          key={groupDim}
           className="grid gap-5"
           style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}
         >
           {groups.map((g) => (
-            <div key={g.key} className={card + " flex flex-col gap-3 px-5 py-4.5"}>
+            <div
+              key={g.key}
+              className={card + " flex flex-col gap-3 px-5 py-4.5" + (groupSwitched ? " rise-in" : "")}
+            >
               <div className="flex items-center justify-between">
                 <span className="rounded-md bg-paper-alt-2 px-2 py-0.5 text-[11.5px] font-semibold text-ink-40">
                   {GROUP_LABELS[groupDim][g.key]}
@@ -342,6 +355,7 @@ export function ProgressDashboard({
                 {bars.bars.map((bar, i) => (
                   <rect
                     key={i}
+                    className="motion-bars"
                     x={bar.x}
                     y={bar.y}
                     width="26"
@@ -351,7 +365,7 @@ export function ProgressDashboard({
                       y: bar.y,
                       height: bar.height,
                       transition:
-                        "y 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), fill 0.3s ease",
+                        "y var(--motion-slow) var(--ease-enter), height var(--motion-slow) var(--ease-enter), fill var(--motion-base) ease",
                     } as React.CSSProperties}
                     fill={
                       isPeak(weekNumbers[i], bar.count)

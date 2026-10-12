@@ -80,7 +80,7 @@ export function FilterSelect({
       {open && (
         <ul
           role="listbox"
-          className="absolute right-0 z-20 mt-1.5 min-w-full rounded-xl border border-border bg-white p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+          className="menu-in absolute right-0 z-20 mt-1.5 min-w-full rounded-xl border border-border bg-white p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
         >
           {choices.map((choice) => {
             const selected = choice === value;
@@ -138,7 +138,7 @@ const dayOf = (d: Date) =>
 
 type XY = [number, number];
 
-const MORPH_MS = 450;
+const MORPH_MS = 450; // --motion-slow
 const MORPH_SAMPLES = 120;
 const easeInOutCubic = (k: number) =>
   k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
@@ -193,7 +193,9 @@ function useMorphedLine(line: string): string {
     const from = clipToView(toPoints(current.current));
     const to = clipToView(toPoints(line));
     let frame = 0;
-    if (from.length === 0 || to.length === 0) {
+    // "Réduire les animations": the new line shows at once.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || from.length === 0 || to.length === 0) {
       frame = requestAnimationFrame(() => {
         current.current = line;
         setDrawn(line);
@@ -400,13 +402,13 @@ export function ScoreChart({
               sidebar) while fading, so Tout/Mois/Semaine glides aside
               instead of jumping. */}
           <div
-            className="grid"
+            className="motion-collapse grid"
             style={{
               gridTemplateColumns: isAll ? "0fr" : "1fr",
               opacity: isAll ? 0 : 1,
               transition: isAll
-                ? "grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease"
-                : "grid-template-columns 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease 0.08s",
+                ? "grid-template-columns var(--motion-base) var(--ease-move), opacity var(--motion-fast) ease"
+                : "grid-template-columns var(--motion-base) var(--ease-move), opacity var(--motion-base) ease 0.08s",
             }}
             inert={isAll}
           >

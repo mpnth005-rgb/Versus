@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { MAX_CARD_CHARS } from "@/lib/constants";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
-  front: z.string().min(1),
-  back: z.string().min(1),
+  front: z.string().min(1).max(MAX_CARD_CHARS),
+  back: z.string().min(1).max(MAX_CARD_CHARS),
 });
 
 async function assertOwnership(userId: string, cardId: string) {

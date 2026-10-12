@@ -111,20 +111,20 @@ export function AppShell({
             so the text never reflows or gets squeezed — only fades and
             slides, as in the design prototype. Closed, the sidebar is inert (no focus/clicks). */}
         <div
-          className="grid flex-shrink-0 transition-[grid-template-columns] duration-[320ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="motion-collapse grid flex-shrink-0 transition-[grid-template-columns] duration-(--motion-base) ease-(--ease-move)"
           style={{ gridTemplateColumns: open ? "1fr" : "0fr" }}
         >
           <div className="min-w-0 overflow-hidden" inert={!open}>
             <div
               className={
-                "flex h-screen w-max flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8 " +
+                "motion-slide flex h-screen w-max flex-col gap-9 overflow-y-hidden border-r border-border bg-white px-6 py-8 " +
                 (open
                   ? "translate-x-0 opacity-100"
                   : "-translate-x-4 opacity-0")
               }
               style={{
                 transition:
-                  "opacity 0.224s ease, transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "opacity calc(var(--motion-base) * 0.7) ease, translate var(--motion-base) var(--ease-move)",
               }}
             >
               <div className="flex items-start justify-between">
@@ -161,7 +161,7 @@ export function AppShell({
           }
           style={{
             // Appears once the sidebar has mostly closed; hides at once.
-            transition: `opacity 0.2s ease ${open ? "0s" : "0.192s"}`,
+            transition: `opacity var(--motion-fast) ease ${open ? "0s" : "calc(var(--motion-base) * 0.6)"}`,
           }}
           inert={open}
         >

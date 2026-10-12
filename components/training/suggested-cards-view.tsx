@@ -26,6 +26,8 @@ export function SuggestedCardsView({
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  // Cards whose sentence was replaced: the new one fades in.
+  const [refreshed, setRefreshed] = useState<Set<number>>(new Set());
 
   function toggle(index: number) {
     setSelected((prev) => {
@@ -52,6 +54,7 @@ export function SuggestedCardsView({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Une erreur est survenue.");
       setCards((prev) => prev.map((c, i) => (i === index ? data.card : c)));
+      setRefreshed((prev) => new Set(prev).add(index));
       setSelected((prev) => {
         const next = new Set(prev);
         next.delete(index);
@@ -109,7 +112,10 @@ export function SuggestedCardsView({
               }
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-2">
+                <div
+                  key={card.front}
+                  className={"flex flex-col gap-2" + (refreshed.has(index) ? " fade-in" : "")}
+                >
                   <div className="text-[10.5px] font-semibold uppercase tracking-[0.04em] text-muted-light">
                     Recto
                   </div>
@@ -163,7 +169,7 @@ export function SuggestedCardsView({
                 >
                   <span
                     className={
-                      "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-300 " +
+                      "refresh-ring h-4 w-4 rounded-full border-2 border-accent border-t-transparent transition-transform duration-(--motion-base) " +
                       (isRefreshing ? "animate-spin" : "")
                     }
                   />

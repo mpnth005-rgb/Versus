@@ -92,6 +92,7 @@ export default async function DeckCardsPage({
             {cards.map((card) => (
               <div
                 key={card.id}
+                data-card-row
                 className="grid grid-cols-[2.3fr_2.3fr_1fr_1.2fr_68px] items-center border-t border-border-soft px-6 py-4 text-[13.5px] transition-colors duration-150 hover:bg-[oklch(0.99_0.003_90)]"
               >
                 <div className="pr-4 text-ink-softer">{card.front}</div>

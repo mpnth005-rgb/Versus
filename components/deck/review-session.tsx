@@ -13,6 +13,7 @@ import {
 import { DailyLimitModal } from "@/components/deck/daily-limit-modal";
 import { LockIcon } from "@/components/lock-icon";
 import { UpsellModal } from "@/components/upsell-modal";
+import { MAX_DECK_ANSWER_CHARS } from "@/lib/constants";
 
 export type QueueCard = {
   id: string;
@@ -291,6 +292,12 @@ export function ReviewSession({
     }
   }
 
+  function revealAnswer() {
+    setRevealed(true);
+    // The answer is corrected automatically as it's revealed.
+    if (attempt.trim()) verifyAnswer();
+  }
+
   async function rate(value: Rating) {
     setError(null);
     setPressed(value);
@@ -373,18 +380,22 @@ export function ReviewSession({
             <div className="deck-answer-in flex w-full flex-col items-center gap-4">
               <textarea
                 value={attempt}
+                maxLength={MAX_DECK_ANSWER_CHARS}
                 onChange={(e) => setAttempt(e.target.value)}
+                // Entrée (avec ou sans Maj) retourne la carte: no line breaks.
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    revealAnswer();
+                  }
+                }}
                 placeholder="Tapez votre traduction ici..."
                 rows={2}
                 className="h-[66px] w-full resize-none rounded-lg border border-border-strong bg-white px-[18px] py-3.5 text-left text-[15px] leading-[1.2] text-ink-softer outline-none transition-[border-color,box-shadow] duration-150 focus:border-[oklch(0.45_0.09_200)] focus:shadow-[0_0_0_1px_oklch(0.45_0.09_200)]"
               />
               <button
                 type="button"
-                onClick={() => {
-                  setRevealed(true);
-                  // The answer is corrected automatically as it's revealed.
-                  if (attempt.trim()) verifyAnswer();
-                }}
+                onClick={revealAnswer}
                 className="press-secondary cursor-pointer rounded-lg border border-border-strong bg-white px-5 py-[11px] text-[13.5px] font-semibold text-ink-40"
               >
                 Afficher la réponse
@@ -419,14 +430,14 @@ export function ReviewSession({
                 </div>
               </div>
               <div
-                className="deck-flip-in relative flex w-full flex-col gap-5.5 rounded-2xl border border-border bg-white px-11 py-10 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+                className="deck-flip-in motion-fly relative flex w-full flex-col gap-5.5 rounded-2xl border border-border bg-white px-11 py-10 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
                 style={
                   exitDir
                     ? {
                         transform: `translateX(${exitDir * 160}px) rotate(${exitDir * 6}deg)`,
                         opacity: 0,
                         transition:
-                          "transform 0.42s cubic-bezier(0.5, 0, 0.75, 0) 0.24s, opacity 0.36s ease-in 0.28s",
+                          "transform var(--motion-slow) var(--ease-exit) 0.24s, opacity var(--motion-base) ease-in 0.28s",
                       }
                     : undefined
                 }
@@ -437,7 +448,7 @@ export function ReviewSession({
                 {currentCheck?.status === "done" && (
                   <span
                     className={
-                      "absolute top-9 right-11 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-semibold " +
+                      "fade-in absolute top-9 right-11 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-semibold " +
                       VERDICT_STYLES[currentCheck.verdict].className
                     }
                   >
@@ -514,14 +525,14 @@ export function ReviewSession({
                 and the bar slides away with the card. */}
             <div
               key={`rates-${turn}`}
-              className="deck-rates-in flex w-full max-w-[640px] overflow-hidden rounded-[10px] border border-border"
+              className="deck-rates-in motion-fly flex w-full max-w-[640px] overflow-hidden rounded-[10px] border border-border"
               style={
                 exitDir
                   ? {
                       opacity: 0,
                       transform: "translateY(10px)",
                       transition:
-                        "opacity 0.32s ease 0.34s, transform 0.32s cubic-bezier(0.5, 0, 0.75, 0) 0.34s",
+                        "opacity var(--motion-base) ease 0.34s, transform var(--motion-base) var(--ease-exit) 0.34s",
                     }
                   : undefined
               }
@@ -558,14 +569,14 @@ export function ReviewSession({
                 rating is chosen, leaves with it. */}
             <div
               key={`link-${turn}`}
-              className="deck-rates-in w-full max-w-[640px]"
+              className="deck-rates-in motion-fly w-full max-w-[640px]"
               style={
                 exitDir
                   ? {
                       opacity: 0,
                       transform: "translateY(10px)",
                       transition:
-                        "opacity 0.32s ease 0.34s, transform 0.32s cubic-bezier(0.5, 0, 0.75, 0) 0.34s",
+                        "opacity var(--motion-base) ease 0.34s, transform var(--motion-base) var(--ease-exit) 0.34s",
                     }
                   : undefined
               }

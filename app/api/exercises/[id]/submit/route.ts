@@ -10,10 +10,11 @@ import {
 } from "@/lib/ai";
 import { computeScores, type ErrorType } from "@/lib/scoring";
 import { countWords } from "@/lib/text";
+import { MAX_TRANSLATION_CHARS } from "@/lib/constants";
 import { progressResponse, scaledProgress } from "@/lib/progress-stream";
 
 const bodySchema = z.object({
-  translation: z.string().min(1),
+  translation: z.string().min(1).max(MAX_TRANSLATION_CHARS),
 });
 
 export async function POST(

@@ -56,11 +56,16 @@ export type CorrectionData = {
 export function CorrectionView({ data }: { data: CorrectionData }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
+  // Direction of the last ‹ › click (0 before any): the sentence slides in
+  // from that side.
+  const [direction, setDirection] = useState<1 | -1 | 0>(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
   // Which full text the bottom panel shows: the French source text or the
   // English reference translation.
   const [referenceSide, setReferenceSide] = useState<"fr" | "en">("en");
+  // The reference text only cross-fades once the learner switches it.
+  const [referenceSwitched, setReferenceSwitched] = useState(false);
 
   const sentence = data.sentences[index];
   const hasSentences = data.sentences.length > 0;
@@ -140,7 +145,10 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
               <button
                 type="button"
                 disabled={index === 0}
-                onClick={() => setIndex((i) => Math.max(0, i - 1))}
+                onClick={() => {
+                  setDirection(-1);
+                  setIndex((i) => Math.max(0, i - 1));
+                }}
                 className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ‹
@@ -151,7 +159,10 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
               <button
                 type="button"
                 disabled={index === data.sentences.length - 1}
-                onClick={() => setIndex((i) => Math.min(data.sentences.length - 1, i + 1))}
+                onClick={() => {
+                  setDirection(1);
+                  setIndex((i) => Math.min(data.sentences.length - 1, i + 1));
+                }}
                 className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
                 ›
@@ -160,37 +171,42 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
           )}
         </div>
 
-        {sentence && isCorrect ? (
-          <div className="flex flex-col gap-2.5 rounded-xl border border-[oklch(0.85_0.08_145)] bg-[oklch(0.97_0.03_145)] px-6 py-5">
-            <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
-              {sentence.sourceSentence}
+        <div
+          key={index}
+          className={direction === 1 ? "slide-in-next" : direction === -1 ? "slide-in-prev" : ""}
+        >
+          {sentence && isCorrect ? (
+            <div className="flex flex-col gap-2.5 rounded-xl border border-[oklch(0.85_0.08_145)] bg-[oklch(0.97_0.03_145)] px-6 py-5">
+              <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
+                {sentence.sourceSentence}
+              </div>
+              <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
+              <div className="flex items-center gap-2 border-t border-[oklch(0.88_0.06_145)] pt-2.5 text-[13px] font-semibold text-[oklch(0.42_0.12_145)]">
+                <span>✓</span>Aucune erreur
+              </div>
             </div>
-            <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
-            <div className="flex items-center gap-2 border-t border-[oklch(0.88_0.06_145)] pt-2.5 text-[13px] font-semibold text-[oklch(0.42_0.12_145)]">
-              <span>✓</span>Aucune erreur
+          ) : sentence ? (
+            <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-white px-6 py-5">
+              <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
+                {sentence.sourceSentence}
+              </div>
+              <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
+              <div className="flex flex-col gap-1.5 border-t border-border-soft pt-2.5">
+                {sentence.errors.map((error, i) => (
+                  <div key={i} className="text-[13px] text-danger-text">
+                    <span className="font-semibold">{ERROR_TYPE_LABELS[error.type]} — </span>
+                    {error.explanation}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : sentence ? (
-          <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-white px-6 py-5">
-            <div className="font-serif text-[15px] text-[oklch(0.45_0.01_90)]">
-              {sentence.sourceSentence}
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl border border-accent-border bg-accent-light px-6 py-5 text-[14px] text-accent-ink">
+              <span className="text-lg">✓</span>
+              Aucune erreur détectée — traduction fidèle au texte source.
             </div>
-            <div className="text-[15px] text-ink-softer">{sentence.userSentence}</div>
-            <div className="flex flex-col gap-1.5 border-t border-border-soft pt-2.5">
-              {sentence.errors.map((error, i) => (
-                <div key={i} className="text-[13px] text-danger-text">
-                  <span className="font-semibold">{ERROR_TYPE_LABELS[error.type]} — </span>
-                  {error.explanation}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 rounded-xl border border-accent-border bg-accent-light px-6 py-5 text-[14px] text-accent-ink">
-            <span className="text-lg">✓</span>
-            Aucune erreur détectée — traduction fidèle au texte source.
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl bg-paper-alt p-8">
@@ -204,7 +220,10 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
                 key={side}
                 type="button"
                 disabled={referenceSide === side}
-                onClick={() => setReferenceSide(side)}
+                onClick={() => {
+                  setReferenceSide(side);
+                  setReferenceSwitched(true);
+                }}
                 aria-label={side === "fr" ? "Texte de référence (français)" : "Traduction de référence (anglais)"}
                 className="press-arrow flex h-7 w-7 items-center justify-center rounded-lg border border-border-strong text-[13px] text-ink-40 disabled:cursor-default disabled:border-border-soft disabled:text-muted-ghost"
               >
@@ -213,7 +232,10 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
             ))}
           </div>
         </div>
-        <div className="text-[15.5px] leading-[1.8] text-ink-40">
+        <div
+          key={referenceSide}
+          className={"text-[15.5px] leading-[1.8] text-ink-40" + (referenceSwitched ? " fade-in" : "")}
+        >
           {highlight ? (
             <>
               <span className="text-[oklch(0.72_0.01_90)] transition-colors">
